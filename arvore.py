@@ -31,15 +31,15 @@ class NoTerminal(No):
         super().__init__(valor)
 
     def avalia_valor(self, linha:dict):
-        print(" LINHA ", linha, " VALOR ", self.valor)
-        print("TIPO", type(self.valor))
+        #print(" LINHA ", linha, " VALOR ", self.valor)
+        #print("TIPO", type(self.valor))
         if type(self.valor) == np.float64 or type(self.valor) == np.int64:
             return self.valor
         elif type(self.valor) == list:
             if self.valor[0][0] == "X":
                 return linha[self.valor[0]]
         else:
-            print("AAA", self.valor)
+            #print("AAA", self.valor)
             raise ValueError("Ue")
 
 class NoNaoTerminal(No):
@@ -57,22 +57,23 @@ class NoNaoTerminal(No):
             elif self.valor[0] == '/':
                 return self.filhos[0].avalia_valor(linha) / self.filhos[1].avalia_valor(linha)
             else:
-                print("AAA", self.valor)
+                #print("AAA", self.valor)
                 raise ValueError("Ue")
         elif len (self.valor[0]) == 3:
             if self.valor[0] == 'sen':
-                return math.sin(self.filhos[0].avalia_valor(linha))
+                return np.sin(self.filhos[0].avalia_valor(linha))
             elif self.valor[0] == 'cos':
-                return math.cos(self.filhos[0].avalia_valor(linha))
+                return np.cos(self.filhos[0].avalia_valor(linha))
             elif self.valor[0] == 'log':
-                return math.log(abs(self.filhos[0].avalia_valor(linha))) #TIRAAAR
+                return np.log(abs(self.filhos[0].avalia_valor(linha))) #TIRAAAR
             elif self.valor[0] == 'exp':
-                return math.exp(self.filhos[0].avalia_valor(linha))
+                #print("UE", self.valor[0])
+                return np.exp(self.filhos[0].avalia_valor(linha))
             else:
-                print("AAA", self.valor)
+                #print("AAA", self.valor)
                 raise ValueError("Ue")
         else:
-            print("TAMANHO", len(self.valor), "a", self.valor)
+            #print("TAMANHO", len(self.valor), "a", self.valor)
             raise ValueError("Ue")
 
 #É o indivíduo

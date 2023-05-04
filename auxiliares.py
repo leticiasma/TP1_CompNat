@@ -11,7 +11,7 @@ def calcula_fitness_individuo(individuo:Arvore, df:pd.DataFrame):
 
     resultados = df.apply(lambda linha: individuo.avalia_individuo(linha.to_dict()), axis=1).to_numpy()
 
-    print("DF", df["y"].to_numpy())
+    #print("DF", df["y"].to_numpy())
     diferenca_quadrada = np.square(resultados - df["y"].to_numpy())
     soma = np.sum(diferenca_quadrada)
     fitness = math.sqrt(soma/len(df))
