@@ -22,14 +22,14 @@ class Gramatica():
                 ['log'],
                 ['exp']],
             '<var>': 
-                [['X'+str(i)] for i in np.arange(1, num_vars+1)], #Pode ter 3 ou 9, depende da base de dados
+                [['X'+str(i)] for i in np.arange(0, num_vars)], #Pode ter 3 ou 9, depende da base de dados
             '<const>': self.remove_zero([i for i in np.arange(-1, 1, 0.1)])
         }
 
         self.componentes = {
             'nao_terminais_bin': ['+', '-', '*', '/'],
             'nao_terminais_un': ['sen', 'cos', 'log', 'exp'],
-            'terminais' : ['X'+str(i) for i in range(1, num_vars+1)].extend(self.remove_zero([i for i in np.arange(-1, 1, 0.1)]))
+            'terminais' : ['X'+str(i) for i in range(0, num_vars)].extend(self.remove_zero([i for i in np.arange(-1, 1, 0.1)]))
         }
 
         self.regra_inicial = EXPR
@@ -38,7 +38,8 @@ class Gramatica():
         return [el for el in lista if not isclose(el, 0, abs_tol=0.0001)]
 
     def opcao_aleatoria(self, regra:str) -> list:
-        return random.choice(self.regras[regra])
+        teste = random.choice(self.regras[regra])
+        return teste
     
     def regra_terminal_aleatoria(self):
         return random.choice(['<const>', '<var>'])

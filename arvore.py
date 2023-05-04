@@ -1,13 +1,15 @@
-from __future__ import annotations
+#from __future__ import annotations
 
 from gramatica import Gramatica
+import math
+import numpy as np
 
 class No():
     def __init__(self, valor):
         self.valor = valor
         self.filhos = list() #lista de nós
 
-    def add_filho(self, novo_no_filho:No):
+    def add_filho(self, novo_no_filho:'No'):
         self.filhos.append(novo_no_filho)
 
     def del_filhos(self):
@@ -19,14 +21,59 @@ class No():
             str_filhos += filho.__repr__()
         
         return f'No(Valor:{self.valor}, Filhos: {str_filhos})'
+    
+    def avalia_valor(self, linha:dict): #PARA PASSAR SERIES_TODICT
+        raise NotImplementedError("Não implementado")
+    
 
 class NoTerminal(No):
     def __init__(self, valor):
         super().__init__(valor)
 
+    def avalia_valor(self, linha:dict):
+        print(" LINHA ", linha, " VALOR ", self.valor)
+        print("TIPO", type(self.valor))
+        if type(self.valor) == np.float64 or type(self.valor) == np.int64:
+            return self.valor
+        elif type(self.valor) == list:
+            if self.valor[0][0] == "X":
+                return linha[self.valor[0]]
+        else:
+            print("AAA", self.valor)
+            raise ValueError("Ue")
+
 class NoNaoTerminal(No):
     def __init__(self, valor):
         super().__init__(valor)
+
+    def avalia_valor(self, linha:dict):
+        if len(self.valor[0]) == 1:
+            if self.valor[0] == '+':
+                return self.filhos[0].avalia_valor(linha) + self.filhos[1].avalia_valor(linha)
+            elif self.valor[0] == '-':
+                return self.filhos[0].avalia_valor(linha) - self.filhos[1].avalia_valor(linha)
+            elif self.valor[0] == '*': 
+                return self.filhos[0].avalia_valor(linha) * self.filhos[1].avalia_valor(linha)
+            elif self.valor[0] == '/':
+                return self.filhos[0].avalia_valor(linha) / self.filhos[1].avalia_valor(linha)
+            else:
+                print("AAA", self.valor)
+                raise ValueError("Ue")
+        elif len (self.valor[0]) == 3:
+            if self.valor[0] == 'sen':
+                return math.sin(self.filhos[0].avalia_valor(linha))
+            elif self.valor[0] == 'cos':
+                return math.cos(self.filhos[0].avalia_valor(linha))
+            elif self.valor[0] == 'log':
+                return math.log(abs(self.filhos[0].avalia_valor(linha))) #TIRAAAR
+            elif self.valor[0] == 'exp':
+                return math.exp(self.filhos[0].avalia_valor(linha))
+            else:
+                print("AAA", self.valor)
+                raise ValueError("Ue")
+        else:
+            print("TAMANHO", len(self.valor), "a", self.valor)
+            raise ValueError("Ue")
 
 #É o indivíduo
 class Arvore():
@@ -37,11 +84,14 @@ class Arvore():
 
     def __repr__(self):
         return f'Arvore(altura: {self.altura}, {self.raiz})'
+
+    def avalia_individuo(self, linha:dict):
+        return self.raiz.avalia_valor(linha)
     
     @staticmethod
-    def gera_strutura_arvore_grow(gramatica:Gramatica, expansao:list, t_max:int)-> tuple(No, int):
+    def gera_strutura_arvore_grow(gramatica:Gramatica, expansao:list, t_max:int):
 
-        print(expansao)
+        #print(expansao)
 
         if t_max == 1:
             regra_terminal = gramatica.regra_terminal_aleatoria()
@@ -73,7 +123,7 @@ class Arvore():
             return no_atual, max([altura_filho_dir, altura_filho_esq])+1
     
     @staticmethod
-    def gera_arvore_grow(gramatica:Gramatica, altura_maxima:int)->Arvore:
+    def gera_arvore_grow(gramatica:Gramatica, altura_maxima:int)->'Arvore':
         no_raiz, altura = Arvore.gera_strutura_arvore_grow(gramatica,
                                                    gramatica.opcao_aleatoria(gramatica.regra_inicial),
                                                    altura_maxima
