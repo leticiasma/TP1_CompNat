@@ -20,9 +20,9 @@ def main():
     altura_max_individuo = int(sys.argv[2])
     num_individuos = int(sys.argv[3]) #Tamanho população
     num_geracoes = int(sys.argv[4])
-    tipo_selecao = int(sys.argv[5])
-    p_c = int(sys.argv[6]) #Probabilidade crossover
-    p_m = int(sys.argv[7]) #Probabilidade mutação
+    tipo_selecao = sys.argv[5]
+    p_c = sys.argv[6] #Probabilidade crossover
+    p_m = sys.argv[7] #Probabilidade mutação
 
     individuos_iniciais = gera_populacao_inicial(num_individuos, num_vars, altura_max_individuo)
     populacao_atual = individuos_iniciais
@@ -39,6 +39,7 @@ def main():
         realiza_mutacoes(populacao_atual, p_m)
     
     fitness_individuos_finais = calcula_fitness_individuos(populacao_atual, df)
+    print(fitness_individuos_finais)
     #Retornar solução na posição da maior fitness 
 
     '''for individuo in individuos:

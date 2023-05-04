@@ -89,12 +89,17 @@ class Arvore():
         self.raiz = no_raiz
         self.fitness = float('inf')
         self.altura = altura_atual
+        self.nos = [self.no_raiz]
 
     def __repr__(self):
         return f'Arvore(altura: {self.altura}, {self.raiz})'
 
     def avalia_individuo(self, linha:dict):
         return self.raiz.avalia_valor(linha)
+
+    def sorteia_no(self):
+        pass
+
     
     @staticmethod
     def gera_strutura_arvore_grow(gramatica:Gramatica, expansao:list, t_max:int):
@@ -103,10 +108,15 @@ class Arvore():
 
         if t_max == 1:
             regra_terminal = gramatica.regra_terminal_aleatoria()
-            return NoTerminal(gramatica.opcao_aleatoria(regra_terminal)), 1
+            no_criado = NoTerminal(gramatica.opcao_aleatoria(regra_terminal))
+            self.nos.append(no_criado)
+            
+            return no_criado, 1
         
         if len(expansao) == 1:
-            return NoTerminal(gramatica.opcao_aleatoria(expansao[0])), 1
+            no_criado = NoTerminal(gramatica.opcao_aleatoria(expansao[0]))
+            self.nos.append(no_criado)
+            return no_criado, 1
         
         elif len(expansao) == 2:
             no_filho, altura_filho = Arvore.gera_strutura_arvore_grow(gramatica,

@@ -66,9 +66,19 @@ def selecao_por_torneio(individuos:list, num_individuos:int, df):
 ##########
 def realiza_crossovers (individuos, p_c):
     #Seleciona dois indivíduos aleatoriamente
+    individuos_pos_crossover = []
+
+    num_individuos = 2
+    par_individuos = random.SystemRandom().sample(individuos, num_individuos)
+    numero_aleatorio = random.random()
+
+    if numero_aleatorio < 0.9:
+        no_aleatorio = par_individuos[0].sorteia_no()
+    individuos_pos_crossover.append(par_individuos)
+    
     #Aplica ou não crossover
     #Troca os pais pelos filhos
-    pass
+
 def realiza_mutacoes (individuos, p_m):
     #Seleciona um indivíduo aleatoriamente
     #Aplica ou não mutacao
