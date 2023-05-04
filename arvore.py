@@ -55,7 +55,14 @@ class NoNaoTerminal(No):
             elif self.valor[0] == '*': 
                 return self.filhos[0].avalia_valor(linha) * self.filhos[1].avalia_valor(linha)
             elif self.valor[0] == '/':
-                return self.filhos[0].avalia_valor(linha) / self.filhos[1].avalia_valor(linha)
+                termo_esq = self.filhos[0].avalia_valor(linha)
+                termo_dir = self.filhos[1].avalia_valor(linha)
+
+                if termo_esq != 0: #na verdade tem que usar algo "perto o bastante"
+                    return self.filhos[0].avalia_valor(linha) / self.filhos[1].avalia_valor(linha)
+                else:
+                    return 0 #Ou algo melhor que isso
+                
             else:
                 #print("AAA", self.valor)
                 raise ValueError("Ue")

@@ -1,4 +1,4 @@
-from etapas import gera_populacao_inicial, calcula_fitness_individuos, selecao_por_roleta, selecao_por_torneio
+from etapas import gera_populacao_inicial, calcula_fitness_individuos, selecao_por_roleta, selecao_por_torneio, realiza_crossovers, realiza_mutacoes
 
 import random
 import pandas as pd 
@@ -20,21 +20,26 @@ def main():
     altura_max_individuo = int(sys.argv[2])
     num_individuos = int(sys.argv[3]) #Tamanho população
     num_geracoes = int(sys.argv[4])
-    p_c = int(sys.argv[5]) #Probabilidade crossover
-    p_m = int(sys.argv[6]) #Probabilidade mutação
+    tipo_selecao = int(sys.argv[5])
+    p_c = int(sys.argv[6]) #Probabilidade crossover
+    p_m = int(sys.argv[7]) #Probabilidade mutação
 
     individuos_iniciais = gera_populacao_inicial(num_individuos, num_vars, altura_max_individuo)
-    fitness_individuos_iniciais = calcula_fitness_individuos(individuos_iniciais, df)
+    populacao_atual = individuos_iniciais
 
-    individuos_selecionados = selecao_por_roleta(individuos_iniciais, num_individuos, df)
-    novas_fitness = calcula_fitness_individuos(individuos_selecionados, df)
+    for g in range(num_geracoes): #Critério de parada
+        if tipo_selecao == 'r':
+            individuos_selecionados = selecao_por_roleta(populacao_atual, num_individuos, df)
+        elif tipo_selecao == 't':
+            individuos_selecionados = selecao_por_torneio(populacao_atual, num_individuos, df)
+            
+        populacao_atual = individuos_selecionados
 
-    individuos_selecionados = selecao_por_torneio(individuos_iniciais, num_individuos, df)
-    novas_fitness_2 = calcula_fitness_individuos(individuos_selecionados, df)
-
-    print(fitness_individuos_iniciais)
-    print(novas_fitness)
-    print(novas_fitness_2)
+        realiza_crossovers(populacao_atual, p_c)
+        realiza_mutacoes(populacao_atual, p_m)
+    
+    fitness_individuos_finais = calcula_fitness_individuos(populacao_atual, df)
+    #Retornar solução na posição da maior fitness 
 
     '''for individuo in individuos:
         print(individuo)

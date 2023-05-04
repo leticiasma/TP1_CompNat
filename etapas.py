@@ -62,3 +62,15 @@ def selecao_por_torneio(individuos:list, num_individuos:int, df):
         individuos_selecionados.append(vencedor_torneio)
 
     return individuos_selecionados
+
+##########
+def realiza_crossovers (individuos, p_c):
+    #Seleciona dois indivíduos aleatoriamente
+    #Aplica ou não crossover
+    #Troca os pais pelos filhos
+    pass
+def realiza_mutacoes (individuos, p_m):
+    #Seleciona um indivíduo aleatoriamente
+    #Aplica ou não mutacao
+    #Troca o "pai" pelo filho
+    pass
