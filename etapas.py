@@ -1,4 +1,4 @@
-from arvore import Arvore
+from individuo import Individuo, gera_arvore_grow 
 from gramatica import Gramatica
 from auxiliares import *
 import random
@@ -6,18 +6,17 @@ from random import choices
 
 #############################################
 
-def gera_individuo_metodo_grow(num_vars:int, altura_maxima:int):
+def gera_arvore_metodo_grow(num_vars:int, altura_maxima:int) -> Arvore:
     gramatica = Gramatica(num_vars)
 
-    individuo = Arvore.gera_arvore_grow(gramatica, altura_maxima)
-
-    return individuo
+    return gera_arvore_grow(gramatica, altura_maxima)
 
 def gera_populacao_inicial(num_individuos:int, num_vars:int, altura_maxima:int) -> list: 
     individuos = []
     
     for i in range(num_individuos):
-        individuo = gera_individuo_metodo_grow(num_vars, altura_maxima)
+        individuo = Individuo()
+        individuo.arvore = gera_arvore_metodo_grow(num_vars, altura_maxima)
         individuos.append(individuo)
 
     return individuos
@@ -72,8 +71,19 @@ def realiza_crossovers (individuos, p_c):
     par_individuos = random.SystemRandom().sample(individuos, num_individuos)
     numero_aleatorio = random.random()
 
-    if numero_aleatorio < 0.9:
-        no_aleatorio = par_individuos[0].sorteia_no()
+    if numero_aleatorio < float(p_c):
+        no_aleatorio_individuo_0 = par_individuos[0].arvore.sorteia_no()
+        no_encontrado = par_individuos[1].arvore.procura_no(no_aleatorio_individuo_0.valor)
+
+        if no_encontrado == None:
+            print("SCRR", no_aleatorio_individuo_0.valor)
+            print("Não pôde realizar crossover, nós iguais não encontrados")
+        else:
+            print("No a ser trocado: ", no_aleatorio_individuo_0.valor)
+            subarvore_antiga_individuo_0 = no_aleatorio_individuo_0.filhos
+            no_aleatorio_individuo_0 = no_encontrado.filhos
+            no_encontrado.filhos = subarvore_antiga_individuo_0            
+
     individuos_pos_crossover.append(par_individuos)
     
     #Aplica ou não crossover

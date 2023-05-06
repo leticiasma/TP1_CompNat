@@ -5,8 +5,11 @@ import pandas as pd
 import numpy as n
 import sys
 
+#PRECISO FAZER NOS DO TIPO OP, SENÃO SEMPRE PRA MUTAR ETC VAI SER SO DE TERMINAIS. MAS E OS NOS DO TIPO
+#NAO TERMINAL? NAO TO ENTENDENDO
+
 def main():
-    random.seed(0) #com 23 dá erro
+    #random.seed(23) #com 23 dá erro
 
     df = pd.read_csv(sys.argv[1])
     num_cols = len(df.columns)
@@ -27,6 +30,11 @@ def main():
     individuos_iniciais = gera_populacao_inicial(num_individuos, num_vars, altura_max_individuo)
     populacao_atual = individuos_iniciais
 
+    print("ANTIGOS \n")
+    for individuo in populacao_atual:
+        print(individuo.arvore)
+        print()
+
     for g in range(num_geracoes): #Critério de parada
         if tipo_selecao == 'r':
             individuos_selecionados = selecao_por_roleta(populacao_atual, num_individuos, df)
@@ -42,9 +50,10 @@ def main():
     print(fitness_individuos_finais)
     #Retornar solução na posição da maior fitness 
 
-    '''for individuo in individuos:
-        print(individuo)
-        print("\n")'''
+    print("NOVOS \n")
+    for individuo in populacao_atual:
+        print(individuo.arvore)
+        print()
 
 if __name__ == "__main__":
     main()

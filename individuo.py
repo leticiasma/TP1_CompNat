@@ -3,6 +3,7 @@
 from gramatica import Gramatica
 import math
 import numpy as np
+import random
 
 class No():
     def __init__(self, valor):
@@ -58,7 +59,7 @@ class NoNaoTerminal(No):
                 termo_esq = self.filhos[0].avalia_valor(linha)
                 termo_dir = self.filhos[1].avalia_valor(linha)
 
-                if termo_esq != 0: #na verdade tem que usar algo "perto o bastante"
+                if not math.isclose(termo_esq, 0): #na verdade tem que usar algo "perto o bastante"
                     return self.filhos[0].avalia_valor(linha) / self.filhos[1].avalia_valor(linha)
                 else:
                     return 0 #Ou algo melhor que isso
@@ -83,13 +84,18 @@ class NoNaoTerminal(No):
             #print("TAMANHO", len(self.valor), "a", self.valor)
             raise ValueError("Ue")
 
-#É o indivíduo
+class Individuo():
+    def __init__(self):
+        self.arvore = None
+    #Arvore(No, altura_atual)
+
+#É a estrutura do indivíduo
 class Arvore():
     def __init__(self, no_raiz:No, altura_atual:int):
         self.raiz = no_raiz
         self.fitness = float('inf')
         self.altura = altura_atual
-        self.nos = [self.no_raiz]
+        self.nos = [self.raiz]
 
     def __repr__(self):
         return f'Arvore(altura: {self.altura}, {self.raiz})'
@@ -98,56 +104,66 @@ class Arvore():
         return self.raiz.avalia_valor(linha)
 
     def sorteia_no(self):
-        pass
+        no_sorteado = random.choice(self.nos)
 
+        return no_sorteado
+
+    def procura_no(self, valor_no):
+        for no in self.nos:
+            if no.valor == valor_no:
+                return no
+        
+        return None
+
+def gera_strutura_arvore_grow(gramatica:Gramatica, expansao:list, t_max:int, nos:list):
+
+    #print(expansao)
+
+    if t_max == 1:
+        regra_terminal = gramatica.regra_terminal_aleatoria()
+        no_criado = NoTerminal(gramatica.opcao_aleatoria(regra_terminal))
+        nos.append(no_criado)
+        
+        return no_criado, 1
     
-    @staticmethod
-    def gera_strutura_arvore_grow(gramatica:Gramatica, expansao:list, t_max:int):
-
-        #print(expansao)
-
-        if t_max == 1:
-            regra_terminal = gramatica.regra_terminal_aleatoria()
-            no_criado = NoTerminal(gramatica.opcao_aleatoria(regra_terminal))
-            self.nos.append(no_criado)
-            
-            return no_criado, 1
-        
-        if len(expansao) == 1:
-            no_criado = NoTerminal(gramatica.opcao_aleatoria(expansao[0]))
-            self.nos.append(no_criado)
-            return no_criado, 1
-        
-        elif len(expansao) == 2:
-            no_filho, altura_filho = Arvore.gera_strutura_arvore_grow(gramatica,
-                                                        gramatica.opcao_aleatoria(expansao[1]),
-                                                        t_max-1)
-            no_atual = NoNaoTerminal(gramatica.opcao_aleatoria(expansao[0]))
-            no_atual.add_filho(no_filho)
-            return no_atual, altura_filho+1
-        
-        elif len(expansao) == 3:
-            no_filho_esq, altura_filho_esq = Arvore.gera_strutura_arvore_grow(gramatica,
-                                                        gramatica.opcao_aleatoria(expansao[0]),
-                                                        t_max-1)
-            no_filho_dir, altura_filho_dir = Arvore.gera_strutura_arvore_grow(gramatica,
-                                                        gramatica.opcao_aleatoria(expansao[2]),
-                                                        t_max-1)
-            
-            no_atual = NoNaoTerminal(gramatica.opcao_aleatoria(expansao[1]))
-            no_atual.add_filho(no_filho_esq)
-            no_atual.add_filho(no_filho_dir)
-        
-            return no_atual, max([altura_filho_dir, altura_filho_esq])+1
+    if len(expansao) == 1:
+        no_criado = NoTerminal(gramatica.opcao_aleatoria(expansao[0]))
+        nos.append(no_criado)
+        return no_criado, 1
     
-    @staticmethod
-    def gera_arvore_grow(gramatica:Gramatica, altura_maxima:int)->'Arvore':
-        no_raiz, altura = Arvore.gera_strutura_arvore_grow(gramatica,
-                                                   gramatica.opcao_aleatoria(gramatica.regra_inicial),
-                                                   altura_maxima
-                                                   )
+    elif len(expansao) == 2:
+        no_filho, altura_filho = gera_strutura_arvore_grow(gramatica,
+                                                    gramatica.opcao_aleatoria(expansao[1]),
+                                                    t_max-1, nos)
+        no_atual = NoNaoTerminal(gramatica.opcao_aleatoria(expansao[0]))
+        no_atual.add_filho(no_filho)
+        return no_atual, altura_filho+1
+    
+    elif len(expansao) == 3:
+        no_filho_esq, altura_filho_esq = gera_strutura_arvore_grow(gramatica,
+                                                    gramatica.opcao_aleatoria(expansao[0]),
+                                                    t_max-1, nos)
+        no_filho_dir, altura_filho_dir = gera_strutura_arvore_grow(gramatica,
+                                                    gramatica.opcao_aleatoria(expansao[2]),
+                                                    t_max-1, nos)
+        
+        no_atual = NoNaoTerminal(gramatica.opcao_aleatoria(expansao[1]))
+        no_atual.add_filho(no_filho_esq)
+        no_atual.add_filho(no_filho_dir)
+    
+        return no_atual, max([altura_filho_dir, altura_filho_esq])+1
+        
+def gera_arvore_grow(gramatica:Gramatica, altura_maxima:int)->'Arvore':
+    nos = list()
+    no_raiz, altura = gera_strutura_arvore_grow(gramatica,
+                                                gramatica.opcao_aleatoria(gramatica.regra_inicial),
+                                                altura_maxima,
+                                                nos
+                                                )
 
-        return Arvore(no_raiz, altura)
+    arvore = Arvore(no_raiz, altura)
+    arvore.nos = nos
+    return arvore
     
 """arvore = Arvore(No(23))
 arvore.raiz.add_filho(No(3))
