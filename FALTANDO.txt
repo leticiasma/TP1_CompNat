@@ -1,5 +1,6 @@
 python main.py synth1-train.csv 1 100 5 t 1 1
 
+EU ESTAVA FAZENDO MAIOR FITNESS GANHA MAS NA VDD É A MENOR!!!
 
 MAIN
 

@@ -35,13 +35,13 @@ def calcula_fitness_individuos(individuos:list, df):
 ######################################## TIPOS DE SELEÇÃO ########################################
 def selecao_por_roleta(individuos:list, tamanho_populacao:int, df):
     fitness_individuos = calcula_fitness_individuos (individuos, df)
-    fitness_media_populacao = sum(fitness_individuos)/len(fitness_individuos)
+    soma_fitness = sum(fitness_individuos)
 
-    probabilidades_selecao_individuos = []
+    pesos_selecao_individuos = [] #VER SE ISSO VAI ESTAR CERTO MESMO, SE AS PROB MAIORES BATEM COM AS MENORES FITNESS 
     for fitness_individuo in fitness_individuos:
-        probabilidades_selecao_individuos.append(fitness_individuo/fitness_media_populacao)
+        pesos_selecao_individuos.append(1 - (fitness_individuo/soma_fitness))
 
-    individuos_selecionados = choices(individuos, probabilidades_selecao_individuos, k=tamanho_populacao)
+    individuos_selecionados = random.choices(individuos, pesos_selecao_individuos, k=tamanho_populacao)
 
     return individuos_selecionados
 
@@ -54,7 +54,7 @@ def selecao_por_torneio(individuos:list, tamanho_populacao:int, df):
         participantes_torneio = random.choices(population=individuos, k=tamanho_torneio)
         fitness_participantes_torneio = calcula_fitness_individuos(participantes_torneio, df)
 
-        indice_fitness_vencedor_torneio = fitness_participantes_torneio.index(max(fitness_participantes_torneio))
+        indice_fitness_vencedor_torneio = fitness_participantes_torneio.index(min(fitness_participantes_torneio))
         vencedor_torneio = participantes_torneio[indice_fitness_vencedor_torneio]
 
         individuos_selecionados.append(vencedor_torneio)
@@ -69,8 +69,8 @@ def realiza_crossovers (individuos_selecionados, p_c):
     par_individuos:list[Individuo,Individuo] = random.choices(population=individuos_selecionados, k=num_individuos)
     numero_aleatorio = random.random()
 
-    print("Indivíduo 1 selecionado:", par_individuos[0])
-    print("Indivíduo 2 selecionado:", par_individuos[1], "\n\n")
+    # print("Indivíduo 1 selecionado:", par_individuos[0])
+    # print("Indivíduo 2 selecionado:", par_individuos[1], "\n\n")
 
     if numero_aleatorio < float(p_c):
         no_aleatorio_individuo_0 = par_individuos[0].arvore.sorteia_no()
@@ -82,8 +82,8 @@ def realiza_crossovers (individuos_selecionados, p_c):
         if no_aleatorio_encontrado_com_mesmo_tipo == None:
             print("Não pôde realizar crossover, nós com tipos iguais não encontrados")
         else:
-            print("Vai fazer crossover. No a ser trocado indivíduo 1: ", no_aleatorio_individuo_0)
-            print("Vai fazer crossover. No a ser trocado indivíduo 2: ", no_aleatorio_encontrado_com_mesmo_tipo, "\n\n")
+            # print("Vai fazer crossover. No a ser trocado indivíduo 1: ", no_aleatorio_individuo_0)
+            # print("Vai fazer crossover. No a ser trocado indivíduo 2: ", no_aleatorio_encontrado_com_mesmo_tipo, "\n\n")
             #Crossover com termnais nao ta funcionando pq nao tem filhos
             subarvore_antiga_individuo_0 = no_aleatorio_individuo_0
             subarvore_antiga_individuo_0.pai.del_filho(no_aleatorio_individuo_0)
@@ -99,8 +99,8 @@ def realiza_crossovers (individuos_selecionados, p_c):
 
     individuos_pos_crossover = par_individuos
 
-    print("Pos crossover indivíduo 1:", individuos_pos_crossover[0])
-    print("Pos crossover indivíduo 2:", individuos_pos_crossover[1])
+    # print("Pos crossover indivíduo 1:", individuos_pos_crossover[0])
+    # print("Pos crossover indivíduo 2:", individuos_pos_crossover[1])
     
     #Aplica ou não crossover
     #Troca os pais pelos filhos
@@ -124,7 +124,8 @@ def realiza_mutacoes (individuos, p_m, num_vars):
 
         subarvore = gera_arvore_metodo_grow(num_vars, tamanho_max_subarvore)
 
-        no_aleatorio_individuo = subarvore
+        no_aleatorio_individuo.pai.del_filho(no_aleatorio_individuo)
+        no_aleatorio_individuo.pai.add_filho(subarvore)
     
     print("IND DEPOIS MUTACAO: ", individuo_a_ser_mutado[0].arvore)
 

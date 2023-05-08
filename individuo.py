@@ -107,12 +107,12 @@ class Arvore():
     def __repr__(self):
         return f'Arvore(Altura árvore: {self.altura}; Estrutura: **Raiz: {self.raiz}**)'
 
-    def tem_so_terminal(self, lista_nos:list[No]):
-        for no in lista_nos:
-            if not isinstance(no, NoTerminal):
-                return False
+    # def tem_so_terminal(self, lista_nos:list[No]):
+    #     for no in lista_nos:
+    #         if not isinstance(no, NoTerminal):
+    #             return False
         
-        return True
+    #     return True
 
     #Talvez não precise se eu já atualizar a altura de início em geração de subárvores em mutacao e em crossover
     def atualiza_alturas(self):
