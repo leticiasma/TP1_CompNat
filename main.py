@@ -80,6 +80,7 @@ def main():
     individuos_iniciais = [individuo1, individuo2]
 
     realiza_crossovers(individuos_iniciais, p_c)
+    realiza_mutacoes(individuos_iniciais, p_m, 2)
 
     # populacao_atual = individuos_iniciais
 

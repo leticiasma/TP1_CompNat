@@ -39,3 +39,5 @@ mas na real acho que nem tem mt isso de altura fixa em 7, professora disse q pod
 	poderia ate trocar um terminal por um nao terminal ja que a subarvore vai estar completa. mas o que complica é a altura... talvez fazer uma lógica de sorteio de nós com altura máxima X
 
 alturas todas zoadas
+
+nao to fazendo elitismo ainda

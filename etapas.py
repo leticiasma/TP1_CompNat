@@ -108,17 +108,23 @@ def realiza_crossovers (individuos_selecionados, p_c):
 def realiza_mutacoes (individuos, p_m, num_vars):
     #Seleciona um indivíduo aleatoriamente
     #Aplica ou não mutacao
-    #Troca o "pai" pelo filho
+    #Troca o "pai" pelo filho ou já diretao
     num_individuos = 1
     individuo_a_ser_mutado = random.choices(population=individuos, k=num_individuos)
     numero_aleatorio = random.random()
 
+    print("\n\n\nIND ANTES MUTACAO: ", individuo_a_ser_mutado[0].arvore)
+
     if numero_aleatorio < float(p_m):
         no_aleatorio_individuo = individuo_a_ser_mutado[0].arvore.sorteia_no()
+
+        print("NO A SER MUTADO: ", no_aleatorio_individuo)
 
         tamanho_max_subarvore = individuo_a_ser_mutado[0].altura_max_arvore - no_aleatorio_individuo.altura
 
         subarvore = gera_arvore_metodo_grow(num_vars, tamanho_max_subarvore)
 
         no_aleatorio_individuo = subarvore
+    
+    print("IND DEPOIS MUTACAO: ", individuo_a_ser_mutado[0].arvore)
 
