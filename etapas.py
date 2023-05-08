@@ -4,93 +4,110 @@ from auxiliares import *
 import random
 from random import choices
 
-#############################################
+#OK!!!
+def gera_arvore_metodo_grow(num_variaveis:int, altura_max_arvore:int) -> Arvore:
+    gramatica = Gramatica(num_variaveis)
 
-def gera_arvore_metodo_grow(num_vars:int, altura_maxima:int) -> Arvore:
-    gramatica = Gramatica(num_vars)
+    return gera_arvore_grow(gramatica, altura_max_arvore)
 
-    return gera_arvore_grow(gramatica, altura_maxima)
-
-def gera_populacao_inicial(num_individuos:int, num_vars:int, altura_maxima:int) -> list: 
+#OK!!!
+def gera_populacao_inicial(tamanho_populacao:int, num_variaveis:int, altura_max_individuo:int) -> list: 
     individuos = []
     
-    for i in range(num_individuos):
-        individuo = Individuo()
-        individuo.arvore = gera_arvore_metodo_grow(num_vars, altura_maxima)
+    for _ in range(tamanho_populacao):
+        individuo = Individuo(altura_max_individuo)
+        individuo.arvore = gera_arvore_metodo_grow(num_variaveis, altura_max_individuo)
         individuos.append(individuo)
 
     return individuos
 
+#OK!!!
 def calcula_fitness_individuos(individuos:list, df):
     fitness_individuos = []
 
     for individuo in individuos:
         fitness = calcula_fitness_individuo(individuo, df)
         fitness_individuos.append(fitness)
-
-    #print (fitness_individuos)
     
     return fitness_individuos
 
-##########
-def selecao_por_roleta(individuos:list, num_individuos:int, df):
+######################################## TIPOS DE SELEÇÃO ########################################
+def selecao_por_roleta(individuos:list, tamanho_populacao:int, df):
     fitness_individuos = calcula_fitness_individuos (individuos, df)
     fitness_media_populacao = sum(fitness_individuos)/len(fitness_individuos)
 
     probabilidades_selecao_individuos = []
-    for fitness in fitness_individuos:
-        probabilidades_selecao_individuos.append(fitness/fitness_media_populacao)
+    for fitness_individuo in fitness_individuos:
+        probabilidades_selecao_individuos.append(fitness_individuo/fitness_media_populacao)
 
-    individuos_selecionados = choices(individuos, probabilidades_selecao_individuos, k=num_individuos)
+    individuos_selecionados = choices(individuos, probabilidades_selecao_individuos, k=tamanho_populacao)
 
     return individuos_selecionados
 
-def selecao_por_torneio(individuos:list, num_individuos:int, df):
-    tamanho_torneio = 2
+def selecao_por_torneio(individuos:list, tamanho_populacao:int, df):
 
+    tamanho_torneio = 2
     individuos_selecionados = []
 
-    for t in range (num_individuos):
-        participantes_torneio = random.SystemRandom().sample(individuos, tamanho_torneio)
+    for _ in range (tamanho_populacao):
+        participantes_torneio = random.choices(population=individuos, k=tamanho_torneio)
         fitness_participantes_torneio = calcula_fitness_individuos(participantes_torneio, df)
-        if fitness_participantes_torneio[0] >= fitness_participantes_torneio[1]:
-            vencedor_torneio = participantes_torneio[0]
-        else:
-            vencedor_torneio = participantes_torneio[1]
-        #vencedor_torneio = participantes_torneio.index(max(fitness_participantes_torneio))
+
+        indice_fitness_vencedor_torneio = fitness_participantes_torneio.index(max(fitness_participantes_torneio))
+        vencedor_torneio = participantes_torneio[indice_fitness_vencedor_torneio]
+
         individuos_selecionados.append(vencedor_torneio)
 
     return individuos_selecionados
 
-##########
-def realiza_crossovers (individuos, p_c):
+######################################## OPERAÇÕES GENÉTICAS ########################################
+def realiza_crossovers (individuos_selecionados, p_c):
     #Seleciona dois indivíduos aleatoriamente
-    individuos_pos_crossover = []
 
     num_individuos = 2
-    par_individuos = random.SystemRandom().sample(individuos, num_individuos)
+    par_individuos:list[Individuo,Individuo] = random.choices(population=individuos_selecionados, k=num_individuos)
     numero_aleatorio = random.random()
 
     if numero_aleatorio < float(p_c):
         no_aleatorio_individuo_0 = par_individuos[0].arvore.sorteia_no()
-        no_encontrado = par_individuos[1].arvore.procura_no(no_aleatorio_individuo_0.valor)
 
-        if no_encontrado == None:
-            print("SCRR", no_aleatorio_individuo_0.valor)
-            print("Não pôde realizar crossover, nós iguais não encontrados")
+        tipo_no_aleatorio_individuo_0 = type(no_aleatorio_individuo_0.valor)
+        #NÃO SEI SE VALE TROCANDO UM OPBIN POR UM OPUN POR EXEMPLO, MESMO AMBOS SENDO NAO TERMINAIS
+        no_aleatorio_encontrado_com_mesmo_tipo = par_individuos[1].arvore.procura_no(tipo_no_aleatorio_individuo_0)
+
+        if no_aleatorio_encontrado_com_mesmo_tipo == None:
+            print("Não pôde realizar crossover, nós com tipos iguais não encontrados")
         else:
-            print("No a ser trocado: ", no_aleatorio_individuo_0.valor)
+            print("Vai fazer crossover. No a ser trocado indivíduo 1: ", no_aleatorio_individuo_0.valor)
+            print("Vai fazer crossover. No a ser trocado indivíduo 2: ", no_aleatorio_encontrado_com_mesmo_tipo.valor)
             subarvore_antiga_individuo_0 = no_aleatorio_individuo_0.filhos
-            no_aleatorio_individuo_0 = no_encontrado.filhos
-            no_encontrado.filhos = subarvore_antiga_individuo_0            
+            no_aleatorio_individuo_0.filhos = no_aleatorio_encontrado_com_mesmo_tipo.filhos
+            no_aleatorio_encontrado_com_mesmo_tipo.filhos = subarvore_antiga_individuo_0
+    else:
+        print("NÃO FEZ O CROSSOVER por probabilidade.")       
 
-    individuos_pos_crossover.append(par_individuos)
+    individuos_pos_crossover = par_individuos.copy()
+
+    print("Pos crossover indivíduo 1:", individuos_pos_crossover[0])
+    print("Pos crossover indivíduo 2:", individuos_pos_crossover[1])
     
     #Aplica ou não crossover
     #Troca os pais pelos filhos
 
-def realiza_mutacoes (individuos, p_m):
+def realiza_mutacoes (individuos, p_m, num_vars):
     #Seleciona um indivíduo aleatoriamente
     #Aplica ou não mutacao
     #Troca o "pai" pelo filho
-    pass
+    num_individuos = 1
+    individuo_a_ser_mutado = random.choices(population=individuos, k=num_individuos)
+    numero_aleatorio = random.random()
+
+    if numero_aleatorio < float(p_m):
+        no_aleatorio_individuo = individuo_a_ser_mutado[0].arvore.sorteia_no()
+
+        tamanho_max_subarvore = individuo_a_ser_mutado[0].altura_max_arvore - no_aleatorio_individuo.altura
+
+        subarvore = gera_arvore_metodo_grow(num_vars, tamanho_max_subarvore)
+
+        no_aleatorio_individuo = subarvore
+

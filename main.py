@@ -2,58 +2,96 @@ from etapas import gera_populacao_inicial, calcula_fitness_individuos, selecao_p
 
 import random
 import pandas as pd 
-import numpy as n
 import sys
+from individuo import *
 
-#PRECISO FAZER NOS DO TIPO OP, SENÃO SEMPRE PRA MUTAR ETC VAI SER SO DE TERMINAIS. MAS E OS NOS DO TIPO
-#NAO TERMINAL? NAO TO ENTENDENDO
+#seed = random.randrange(10000)
+random.seed(1)
+#print("Seed usada:", seed)
 
+#OK!!!
 def main():
-    #random.seed(23) #com 23 dá erro
 
     df = pd.read_csv(sys.argv[1])
-    num_cols = len(df.columns)
-    num_features_cols = num_cols-1
-    nomes = [f'X{i}' for i in range(num_features_cols)]
-    nomes.append('y')
-    df.columns = nomes
+    num_variaveis = len(df.columns)-1 #Número de variáveis do dataset
+    nomes_colunas = [f'X{i}' for i in range(num_variaveis)]
+    nomes_colunas.append('y')
+    df.columns = nomes_colunas
 
-    num_vars = len(nomes)-1 #Número de variáveis do dataset
+    num_geracoes = int(sys.argv[2]) #Num de iterações
+    tamanho_populacao = int(sys.argv[3])
+    altura_max_individuo = int(sys.argv[4]) #Altura máxima, sendo altura_raiz = 1
+    tipo_selecao = str(sys.argv[5])
+    p_c = float(sys.argv[6]) #Probabilidade crossover entre dois indivíduos
+    p_m = float(sys.argv[7]) #Probabilidade mutação de um indivíduo
 
-    altura_max_individuo = int(sys.argv[2])
-    num_individuos = int(sys.argv[3]) #Tamanho população
-    num_geracoes = int(sys.argv[4])
-    tipo_selecao = sys.argv[5]
-    p_c = sys.argv[6] #Probabilidade crossover
-    p_m = sys.argv[7] #Probabilidade mutação
+    #Gera a população inicial de indivíduos aleatoriamente seguindo regras da gramática
+    #individuos_iniciais = gera_populacao_inicial(tamanho_populacao, num_variaveis, altura_max_individuo)
 
-    individuos_iniciais = gera_populacao_inicial(num_individuos, num_vars, altura_max_individuo)
-    populacao_atual = individuos_iniciais
+    #Indivíduo 1
+    individuo1 = Individuo(5)
+    individuo1.altura_max_arvore = 5
+    nos_nivel_0 = [NoNaoTerminal('sen')]
+    nos_nivel_1 = [NoNaoTerminal('+')]
+    nos_nivel_0[0].filhos = nos_nivel_1
+    nos_nivel_2 = [NoTerminal(3), NoNaoTerminal('*')]
+    nos_nivel_1[0].filhos = nos_nivel_2
+    nos_nivel_3 = [NoTerminal(4), NoNaoTerminal('-')]
+    nos_nivel_2[1].filhos = nos_nivel_3
+    nos_nivel_4 = [NoNaoTerminal('*'), NoTerminal(4)]
+    nos_nivel_3[1].filhos = nos_nivel_4
+    nos_nivel_5 = [NoTerminal(3), NoTerminal(3)]
+    nos_nivel_4[0].filhos = nos_nivel_5
 
-    print("ANTIGOS \n")
-    for individuo in populacao_atual:
-        print(individuo.arvore)
-        print()
+    individuo1.arvore = Arvore(nos_nivel_0, 5)
 
-    for g in range(num_geracoes): #Critério de parada
-        if tipo_selecao == 'r':
-            individuos_selecionados = selecao_por_roleta(populacao_atual, num_individuos, df)
-        elif tipo_selecao == 't':
-            individuos_selecionados = selecao_por_torneio(populacao_atual, num_individuos, df)
+    #Indivíduo 2
+    individuo2 = Individuo(5)
+    individuo2.altura_max_arvore = 5
+    nos_nivel_0_2 = [NoNaoTerminal('cos')]
+    nos_nivel_1_2 = [NoNaoTerminal('*')]
+    nos_nivel_0_2[0].filhos = nos_nivel_1_2
+    nos_nivel_2_2 = [NoTerminal(2), NoNaoTerminal('+')]
+    nos_nivel_1_2[0].filhos = nos_nivel_2_2
+    nos_nivel_3_2 = [NoTerminal(9), NoNaoTerminal('log')]
+    nos_nivel_2_2[1].filhos = nos_nivel_3_2
+    nos_nivel_4_2 = [NoTerminal(2)]
+    nos_nivel_3_2[1].filhos = nos_nivel_4_2
+
+    individuo2.arvore = Arvore(nos_nivel_0_2, 5)   
+
+    individuos_iniciais = [individuo1, individuo2]
+
+    realiza_crossovers(individuos_iniciais, p_c)
+
+    # populacao_atual = individuos_iniciais
+
+    # #Por certo número de gerações ("critério de parada"), repetir o ciclo
+    # for g in range(num_geracoes):
+    #     #Selecionar indivíduos
+    #     if tipo_selecao == 'r':
+    #         #Cálculo da fitness de toda a população calculada no início de "selecao_por_roleta"
+    #         individuos_selecionados = selecao_por_roleta(populacao_atual, tamanho_populacao, df)
+    #     elif tipo_selecao == 't':
+    #         #A fitness é calculada para os participantes de cada torneio
+    #         individuos_selecionados = selecao_por_torneio(populacao_atual, tamanho_populacao, df)
+    #     elif tipo_selecao == 'l': #LEXICASE
+    #         pass
             
-        populacao_atual = individuos_selecionados
+    #     populacao_atual = individuos_selecionados
 
-        realiza_crossovers(populacao_atual, p_c)
-        realiza_mutacoes(populacao_atual, p_m)
+    #     #Aplicar operações genéticas
+    #     realiza_crossovers(populacao_atual, p_c) #VER SE MUDA DENTRO DA PROPRIA POP_ATUAL OU TERIA QUE CRIAR UMA NOVA
+    #     realiza_mutacoes(populacao_atual, p_m, num_variaveis)
     
-    fitness_individuos_finais = calcula_fitness_individuos(populacao_atual, df)
-    print(fitness_individuos_finais)
-    #Retornar solução na posição da maior fitness 
+    # #Calcular a fitness para a última população gerada
+    # fitness_individuos_finais = calcula_fitness_individuos(populacao_atual, df)
 
-    print("NOVOS \n")
-    for individuo in populacao_atual:
-        print(individuo.arvore)
-        print()
+    # #Retornar solução na posição da maior fitness
+    # indice_melhor_fitness = fitness_individuos_finais.index(max(fitness_individuos_finais))
+    # melhor_individuo_solucao = populacao_atual[indice_melhor_fitness]
+
+    # print("\nMELHOR SOLUCAO: ", melhor_individuo_solucao.arvore)
 
 if __name__ == "__main__":
     main()

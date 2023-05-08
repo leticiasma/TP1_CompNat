@@ -1,0 +1,32 @@
+python main.py synth1-train.csv 1 100 5 t 1 1
+
+
+MAIN
+
+#random.seed(11) #com 23 dá erro e seed 2 tbm; agr nessa versao com 10 da erro, 24 da divisao por zero; 7906 da bosta
+#ver todo lugar que possa ter divisão pq sempre aleatoriamente da erro de divisao por zero
+#Quase não funciona crossover. Talvez melhor ir vendo de nó em nó até realizar zero ou um no máximo crossover
+#Cuidado com mutação quando a árvore for formada de um único nó
+
+#PRECISO FAZER NOS DO TIPO OP, SENÃO SEMPRE PRA MUTAR ETC VAI SER SO DE TERMINAIS. MAS E OS NOS DO TIPO
+#NAO TERMINAL? NAO TO ENTENDENDO
+
+#procurar pelo mesmo tipo e nao valor pq ai vai dar mais crossovers, ai talvez mude aquilo de só fazer crossover pelo
+#tipo não terminal
+
+não tá mt claro isso de altura: ver esse link https://stackoverflow.com/questions/2603692/what-is-the-difference-between-tree-depth-and-height
+
+-------
+MUTACAO
+
+
+        #PODE DAR RUIM PQ ACHO Q PRECISO DO PAI
+
+        #FALTA ATUALIZAR ALTURAS DA SUBARVORE e da arvore como um todo
+
+        #todos os atributos do individuo vao estar errados depois disso tipo a lista de nós. precisaria fazer métodos de 
+        #atualização ou preenchimento pra se o individuo for esolhido de novo para mutar não ter problema
+
+
+
+        #Gerar uma subárvore de tamanho máximo respeitando a altura do nó a ser mutado

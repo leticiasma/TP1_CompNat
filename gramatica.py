@@ -2,16 +2,19 @@ import random
 import numpy as np
 from math import isclose
 
+#MAIS OU MENOS!!!
 EXPR = '<expr>' 
 class Gramatica():
-    def __init__(self, num_vars):
+    def __init__(self, num_variaveis):
+        self.regra_inicial = EXPR
+
         self.regras = {
             EXPR: [
                 [EXPR, '<opbin>', EXPR],
                 ['<opun>', EXPR],
                 ['<var>'],
                 ['<const>']],
-            '<opbin>': [
+            '<opbin>': [ #VER SE PRECISA MESMO DESSAS LISTAS COM 1 ELEMENTO SÓ
                 ['+'],
                 ['-'],
                 ['*'],
@@ -22,36 +25,34 @@ class Gramatica():
                 ['log'],
                 ['exp']],
             '<var>': 
-                [['X'+str(i)] for i in np.arange(0, num_vars)], #Pode ter 3 ou 9, depende da base de dados
+                [['X'+str(i)] for i in np.arange(0, num_variaveis)], #VER SE PRECISA MESMO DESSAS LISTAS COM 1 ELEMENTO SÓ
             '<const>': self.remove_zero([i for i in np.arange(-1, 1, 0.1)])
         }
 
         self.componentes = {
-            'nao_terminais_bin': ['+', '-', '*', '/'],
+            'nao_terminais_bin': ['+', '-', '*', '/'], #AQUI NEM TEM LISTA, É SÓ AS STRINGS
             'nao_terminais_un': ['sen', 'cos', 'log', 'exp'],
-            'terminais' : ['X'+str(i) for i in range(0, num_vars)].extend(self.remove_zero([i for i in np.arange(-1, 1, 0.1)]))
+            #ISSO AQUI TBM TÁ DIFERENTE DO DE CIMA
+            'terminais' : ['X'+str(i) for i in range(0, num_variaveis)].extend(self.remove_zero([i for i in np.arange(-1, 1, 0.1)]))
         }
 
-        self.regra_inicial = EXPR
-
     def remove_zero(self, lista:list) -> list:
-        return [el for el in lista if not isclose(el, 0, abs_tol=0.0001)]
+        return [e for e in lista if not isclose(e, 0, abs_tol=0.000000001)]
 
-    def opcao_aleatoria(self, regra:str) -> list:
-        teste = random.choice(self.regras[regra])
-        return teste
+    def retorna_opcao_aleatoria_regra(self, regra:str) -> list:
+        return random.choice(self.regras[regra])
     
-    def regra_terminal_aleatoria(self):
-        return random.choice(['<const>', '<var>'])
+    def retorna_regra_terminal_aleatoria(self):
+        return random.choice(['<const>', '<var>']) #AQUI NAO É LISTA
     
-    def eh_regra_que_produz_terminal(self, regra:str) -> bool:
+    def eh_regra_que_produz_terminal(self, regra:str) -> bool: #AQUI É LISTA
         return regra in [['<var>'], ['<const>']]
     
-    def eh_regra_que_produz_funcao(self, regra:str) -> bool:
+    def eh_regra_que_produz_funcao(self, regra:str) -> bool: #CONFERIR
         return regra in [['<opbin>'], ['<opun>']]
     
     def eh_regra_que_produz_componente(self, regra:str) -> bool:
         return self.eh_regra_que_produz_funcao(regra) or self.eh_regra_que_produz_terminal(regra)
     
-    def terminal_aleatorio(self):
+    def retorna_terminal_aleatorio(self):
         return random.choice(self.componentes['terminais'])
