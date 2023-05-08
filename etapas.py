@@ -61,6 +61,20 @@ def selecao_por_torneio(individuos:list, tamanho_populacao:int, df):
 
     return individuos_selecionados
 
+def selecao_lexicase(individuos:list, tamanho_populacao:int, df:pd.DataFrame):
+
+    for _ in range(tamanho_populacao):
+        linhas_df_ordem_aleatoria = random.sample(df.values.tolist(), k=len(df))
+
+        for linha in linhas_df_ordem_aleatoria:
+            for individuo in individuos:
+                resultado_avaliacao_individuo = individuo.arvore.avalia_individuo(linha) #VER SE DE FATO A LINHA JÁ É UM DICIONARIO PRINTANDO
+        
+    
+    
+    
+    pass
+
 ######################################## OPERAÇÕES GENÉTICAS ########################################
 def realiza_crossovers (individuos_selecionados, p_c):
     #Seleciona dois indivíduos aleatoriamente
@@ -125,7 +139,7 @@ def realiza_mutacoes (individuos, p_m, num_vars):
         subarvore = gera_arvore_metodo_grow(num_vars, tamanho_max_subarvore)
 
         no_aleatorio_individuo.pai.del_filho(no_aleatorio_individuo)
-        no_aleatorio_individuo.pai.add_filho(subarvore)
+        no_aleatorio_individuo.pai.add_filho(subarvore.raiz)
     
     print("IND DEPOIS MUTACAO: ", individuo_a_ser_mutado[0].arvore)
 

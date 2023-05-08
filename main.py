@@ -94,7 +94,7 @@ def main():
     #         #A fitness é calculada para os participantes de cada torneio
     #         individuos_selecionados = selecao_por_torneio(populacao_atual, tamanho_populacao, df)
     #     elif tipo_selecao == 'l': #LEXICASE
-    #         pass
+    #         individuos_selecionados = selecao_lexicase(populacao_atual, tamanho_populacao, df
             
     #     populacao_atual = individuos_selecionados
 
