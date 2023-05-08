@@ -6,7 +6,7 @@ import sys
 from individuo import *
 
 #seed = random.randrange(10000)
-random.seed(1)
+random.seed(22)
 #print("Seed usada:", seed)
 
 #OK!!!
@@ -34,31 +34,48 @@ def main():
     nos_nivel_0 = [NoNaoTerminal('sen')]
     nos_nivel_1 = [NoNaoTerminal('+')]
     nos_nivel_0[0].filhos = nos_nivel_1
-    nos_nivel_2 = [NoTerminal(3), NoNaoTerminal('*')]
+    nos_nivel_1[0].pai = nos_nivel_0[0]
+    nos_nivel_2 = [NoTerminal(1), NoNaoTerminal('*')]
     nos_nivel_1[0].filhos = nos_nivel_2
-    nos_nivel_3 = [NoTerminal(4), NoNaoTerminal('-')]
+    nos_nivel_2[0].pai = nos_nivel_1[0]
+    nos_nivel_2[1].pai = nos_nivel_1[0]
+    nos_nivel_3 = [NoTerminal(2), NoNaoTerminal('-')]
+    nos_nivel_3[0].pai = nos_nivel_2[1]
+    nos_nivel_3[1].pai = nos_nivel_2[1]
     nos_nivel_2[1].filhos = nos_nivel_3
-    nos_nivel_4 = [NoNaoTerminal('*'), NoTerminal(4)]
+    nos_nivel_4 = [NoNaoTerminal('*'), NoTerminal(3)]
+    nos_nivel_4[0].pai = nos_nivel_3[1]
+    nos_nivel_4[1].pai = nos_nivel_3[1] 
     nos_nivel_3[1].filhos = nos_nivel_4
-    nos_nivel_5 = [NoTerminal(3), NoTerminal(3)]
+    nos_nivel_5 = [NoTerminal(4), NoTerminal(5)]
+    nos_nivel_5[0].pai = nos_nivel_4[0]
+    nos_nivel_5[1].pai = nos_nivel_4[0]
     nos_nivel_4[0].filhos = nos_nivel_5
 
     individuo1.arvore = Arvore(nos_nivel_0, 5)
+    individuo1.arvore.nos.extend(nos_nivel_0+nos_nivel_1+nos_nivel_2+nos_nivel_3+nos_nivel_4+nos_nivel_5)
 
     #Indivíduo 2
-    individuo2 = Individuo(5)
+    individuo2 = Individuo(4)
     individuo2.altura_max_arvore = 5
     nos_nivel_0_2 = [NoNaoTerminal('cos')]
     nos_nivel_1_2 = [NoNaoTerminal('*')]
+    nos_nivel_1_2[0].pai = nos_nivel_0_2[0]
     nos_nivel_0_2[0].filhos = nos_nivel_1_2
-    nos_nivel_2_2 = [NoTerminal(2), NoNaoTerminal('+')]
+    nos_nivel_2_2 = [NoTerminal(6), NoNaoTerminal('+')]
+    nos_nivel_2_2[0].pai = nos_nivel_1_2[0]
+    nos_nivel_2_2[1].pai = nos_nivel_1_2[0]
     nos_nivel_1_2[0].filhos = nos_nivel_2_2
-    nos_nivel_3_2 = [NoTerminal(9), NoNaoTerminal('log')]
+    nos_nivel_3_2 = [NoTerminal(7), NoNaoTerminal('log')]
+    nos_nivel_3_2[0].pai = nos_nivel_2_2[1]
+    nos_nivel_3_2[1].pai = nos_nivel_2_2[1]
     nos_nivel_2_2[1].filhos = nos_nivel_3_2
-    nos_nivel_4_2 = [NoTerminal(2)]
+    nos_nivel_4_2 = [NoTerminal(8)]
+    nos_nivel_4_2[0].pai = nos_nivel_3_2[1]
     nos_nivel_3_2[1].filhos = nos_nivel_4_2
 
-    individuo2.arvore = Arvore(nos_nivel_0_2, 5)   
+    individuo2.arvore = Arvore(nos_nivel_0_2, 5) 
+    individuo2.arvore.nos.extend(nos_nivel_0_2+nos_nivel_1_2+nos_nivel_2_2+nos_nivel_3_2+nos_nivel_4_2)  
 
     individuos_iniciais = [individuo1, individuo2]
 

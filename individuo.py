@@ -7,14 +7,15 @@ import random
 class No():
     def __init__(self, valor):
         self.valor = valor
+        self.pai = None
         self.filhos:list[Individuo] = list() #Lista de nós
         self.altura = 0
 
     def add_filho(self, novo_no_filho:'No'):
         self.filhos.append(novo_no_filho)
 
-    def del_filhos(self): #ACHO QUE NEM ESTOU USANDO
-        self.filhos = list()
+    def del_filho(self, filho:'No'):
+        self.filhos.remove(filho)
 
     def __repr__(self):
         str_filhos = ""
@@ -128,7 +129,6 @@ class Arvore():
         return self.raiz.avalia_valor(linha)
 
     def sorteia_no(self):
-        print("NOS:", self.nos)
         return random.choice(self.nos)
     
     def add_nos(self, nos:list):
@@ -173,6 +173,7 @@ def gera_estrutura_arvore_grow(gramatica:Gramatica, expansao:list, t_max:int, no
         no_criado.altura = altura_atual
         nos.append(no_criado)
         no_criado.add_filho(no_filho)
+        no_filho.pai = no_criado
 
         return no_criado, altura_filho+1
     
@@ -187,7 +188,9 @@ def gera_estrutura_arvore_grow(gramatica:Gramatica, expansao:list, t_max:int, no
         
         no_criado = NoNaoTerminal(gramatica.retorna_opcao_aleatoria_regra(expansao[1]))
         no_criado.add_filho(no_filho_esq)
+        no_filho_esq.pai = no_criado
         no_criado.add_filho(no_filho_dir)
+        no_filho_dir.pai = no_criado
         nos.append(no_criado)
     
         return no_criado, max([altura_filho_dir, altura_filho_esq])+1

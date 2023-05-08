@@ -30,3 +30,12 @@ MUTACAO
 
 
         #Gerar uma subárvore de tamanho máximo respeitando a altura do nó a ser mutado
+
+talvez precise mesmo de uns 4 tipos de no... talvez ao invés de criar mais tipos de nó eu só vá verificando pela gramatica com listas tipo "opbin" etc
+	obs.: raiz não tem pai e terminais nao tem filhos
+se realmente puder trocar qualquer no com qualquer no, apenas garantir respeitar altura
+
+mas na real acho que nem tem mt isso de altura fixa em 7, professora disse q podia variar. melhor entao ignorar altura por enquanto senao nem vou fazer crossovers quase
+	poderia ate trocar um terminal por um nao terminal ja que a subarvore vai estar completa. mas o que complica é a altura... talvez fazer uma lógica de sorteio de nós com altura máxima X
+
+alturas todas zoadas
