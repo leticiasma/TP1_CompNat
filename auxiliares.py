@@ -19,3 +19,10 @@ def calcula_fitness_individuo(individuo:Individuo, df:pd.DataFrame):
     individuo.arvore.fitness = fitness_individuo
 
     return fitness_individuo
+
+def calcula_fitness_individuo_linha(individuo:Individuo, linha:dict): #ver se a linha é mesmo um dict
+
+    resultado = individuo.arvore.avalia_individuo(linha)
+    diferenca = resultado - linha["y"]
+
+    return diferenca

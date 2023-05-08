@@ -25,6 +25,8 @@ def main():
     p_c = float(sys.argv[6]) #Probabilidade crossover entre dois indivíduos
     p_m = float(sys.argv[7]) #Probabilidade mutação de um indivíduo
 
+    elitismo = int(sys.argv[8]) #0 para não elitismo e 1 para elitismo
+
     #Gera a população inicial de indivíduos aleatoriamente seguindo regras da gramática
     #individuos_iniciais = gera_populacao_inicial(tamanho_populacao, num_variaveis, altura_max_individuo)
 

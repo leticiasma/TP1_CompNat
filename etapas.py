@@ -4,6 +4,7 @@ from auxiliares import *
 import random
 from random import choices
 import copy
+import statistics
 
 #OK!!!
 def gera_arvore_metodo_grow(num_variaveis:int, altura_max_arvore:int) -> Arvore:
@@ -42,8 +43,9 @@ def selecao_por_roleta(individuos:list, tamanho_populacao:int, df):
         pesos_selecao_individuos.append(1 - (fitness_individuo/soma_fitness))
 
     individuos_selecionados = random.choices(individuos, pesos_selecao_individuos, k=tamanho_populacao)
+    individuos_selecionados_copias = [copy.deepcopy(individuo) for individuo in individuos_selecionados]
 
-    return individuos_selecionados
+    return individuos_selecionados_copias
 
 def selecao_por_torneio(individuos:list, tamanho_populacao:int, df):
 
@@ -57,23 +59,50 @@ def selecao_por_torneio(individuos:list, tamanho_populacao:int, df):
         indice_fitness_vencedor_torneio = fitness_participantes_torneio.index(min(fitness_participantes_torneio))
         vencedor_torneio = participantes_torneio[indice_fitness_vencedor_torneio]
 
-        individuos_selecionados.append(vencedor_torneio)
+        individuos_selecionados.append(copy.deepcopy(vencedor_torneio))
 
     return individuos_selecionados
 
 def selecao_lexicase(individuos:list, tamanho_populacao:int, df:pd.DataFrame):
 
+    individuos_finais_selecionados = []
+
     for _ in range(tamanho_populacao):
+        #Cada loop do range é UMA seleção. Em cada loop vai excluindo até ficar apenas um selecionado.
         linhas_df_ordem_aleatoria = random.sample(df.values.tolist(), k=len(df))
+        individuos_selecionados = individuos
 
         for linha in linhas_df_ordem_aleatoria:
+            fitness_individuos = []
+
             for individuo in individuos:
-                resultado_avaliacao_individuo = individuo.arvore.avalia_individuo(linha) #VER SE DE FATO A LINHA JÁ É UM DICIONARIO PRINTANDO
+                #É o erro
+                fitness_individuo = calcula_fitness_individuo_linha(individuo, linha)
+                fitness_individuos.append(fitness_individuo)
+            
+            melhor_fitness = min(fitness_individuos)
+            
+            mediana_fitness_individuos = statistics.median(fitness_individuos)
+            abs_diferenca_fitness_mediana = [abs(fitness - mediana_fitness_individuos) for fitness in fitness_individuos]
+            MAD_linha = statistics.median(abs_diferenca_fitness_mediana)
+
+            melhores_individuos = []
+
+            for indice_individuo in range(len(individuos_selecionados)):
+                fitness_individuo = fitness_individuos[indice_individuo]
+
+                if fitness_individuo < melhor_fitness + MAD_linha:
+                    melhores_individuos.append(individuos_selecionados[indice_individuo])
+            
+            individuos_selecionados = melhores_individuos
+
+            if len(individuos_selecionados) == 1:
+                break
         
+        individuo_aleatorio = random.choice(individuos_selecionados)
+        individuos_finais_selecionados.append(copy.deepcopy(individuo_aleatorio))
     
-    
-    
-    pass
+    return individuos_finais_selecionados
 
 ######################################## OPERAÇÕES GENÉTICAS ########################################
 def realiza_crossovers (individuos_selecionados, p_c):
@@ -89,7 +118,7 @@ def realiza_crossovers (individuos_selecionados, p_c):
     if numero_aleatorio < float(p_c):
         no_aleatorio_individuo_0 = par_individuos[0].arvore.sorteia_no()
 
-        tipo_no_aleatorio_individuo_0 = type(no_aleatorio_individuo_0)
+        tipo_no_aleatorio_individuo_0 = type(no_aleatorio_individuo_0) #ACHO QUE PODE FAZER CROSSOVER DE QUALQUER TIPO COM QUALQUER TIPO!!!
         #NÃO SEI SE VALE TROCANDO UM OPBIN POR UM OPUN POR EXEMPLO, MESMO AMBOS SENDO NAO TERMINAIS
         no_aleatorio_encontrado_com_mesmo_tipo = par_individuos[1].arvore.procura_no(tipo_no_aleatorio_individuo_0)
 
