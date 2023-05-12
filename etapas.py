@@ -10,7 +10,11 @@ import statistics
 def gera_arvore_metodo_grow(num_variaveis:int, altura_max_arvore:int) -> Arvore:
     gramatica = Gramatica(num_variaveis)
 
-    return gera_arvore_grow(gramatica, altura_max_arvore)
+    #AQUI3
+    arvore = gera_arvore_grow(gramatica, altura_max_arvore)
+    #AQUI3
+
+    return arvore
 
 #OK!!!
 def gera_populacao_inicial(tamanho_populacao:int, num_variaveis:int, altura_max_individuo:int) -> list: 
@@ -18,9 +22,14 @@ def gera_populacao_inicial(tamanho_populacao:int, num_variaveis:int, altura_max_
     
     for _ in range(tamanho_populacao):
         individuo = Individuo(altura_max_individuo)
-        individuo.arvore = gera_arvore_metodo_grow(num_variaveis, altura_max_individuo)
+
+        #AQUI2
+        individuo.arvore = gera_arvore_metodo_grow(num_variaveis, individuo.altura_max_arvore)
+        #AQUI2
+
         individuos.append(individuo)
 
+    #tinha que retornar individuos de fato e nao arvores
     return individuos
 
 #OK!!!
@@ -63,16 +72,18 @@ def selecao_por_torneio(individuos:list, tamanho_populacao:int, df):
 
     return individuos_selecionados
 
+#Não tá passando por todas as linhas do DF.
 def selecao_lexicase(individuos:list, tamanho_populacao:int, df:pd.DataFrame):
 
     individuos_finais_selecionados = []
 
     for _ in range(tamanho_populacao):
         #Cada loop do range é UMA seleção. Em cada loop vai excluindo até ficar apenas um selecionado.
-        linhas_df_ordem_aleatoria = random.sample(df.values.tolist(), k=len(df))
+        linhas_df_ordem_aleatoria = random.sample(df.to_dict('records'), k=len(df))
         individuos_selecionados = individuos
 
         for linha in linhas_df_ordem_aleatoria:
+            print("A linha que esta vindo ", linha)
             fitness_individuos = []
 
             for individuo in individuos:
@@ -99,76 +110,100 @@ def selecao_lexicase(individuos:list, tamanho_populacao:int, df:pd.DataFrame):
             if len(individuos_selecionados) == 1:
                 break
         
-        individuo_aleatorio = random.choice(individuos_selecionados)
+        individuo_aleatorio = random.choice(individuos_selecionados) #Isso às vezes dá IndexError: list index out of range
         individuos_finais_selecionados.append(copy.deepcopy(individuo_aleatorio))
     
     return individuos_finais_selecionados
 
 ######################################## OPERAÇÕES GENÉTICAS ########################################
-def realiza_crossovers (individuos_selecionados, p_c):
-    #Seleciona dois indivíduos aleatoriamente
+def realiza_crossovers (individuos_selecionados, p_c:float, num_tentativas): #FALTA ATUALIZAR ALTURA, PROFUNDIDADE E LISTA DE NOS
 
-    num_individuos = 2
-    par_individuos:list[Individuo,Individuo] = random.choices(population=individuos_selecionados, k=num_individuos)
-    numero_aleatorio = random.random()
+    individuos_pos_crossover = []
 
-    # print("Indivíduo 1 selecionado:", par_individuos[0])
-    # print("Indivíduo 2 selecionado:", par_individuos[1], "\n\n")
+    for _ in range(num_tentativas):
+        #Seleciona dois indivíduos aleatoriamente
+        num_individuos = 2
+        par_individuos_copia:list[Individuo,Individuo] = copy.deepcopy(random.choices(population=individuos_selecionados, k=num_individuos))
 
-    if numero_aleatorio < float(p_c):
-        no_aleatorio_individuo_0 = par_individuos[0].arvore.sorteia_no()
+        # print("Indivíduo 1 selecionado:", par_individuos[0])
+        # print("Indivíduo 2 selecionado:", par_individuos[1], "\n\n")
 
-        tipo_no_aleatorio_individuo_0 = type(no_aleatorio_individuo_0) #ACHO QUE PODE FAZER CROSSOVER DE QUALQUER TIPO COM QUALQUER TIPO!!!
-        #NÃO SEI SE VALE TROCANDO UM OPBIN POR UM OPUN POR EXEMPLO, MESMO AMBOS SENDO NAO TERMINAIS
-        no_aleatorio_encontrado_com_mesmo_tipo = par_individuos[1].arvore.procura_no(tipo_no_aleatorio_individuo_0)
+        numero_aleatorio = random.random()
 
-        if no_aleatorio_encontrado_com_mesmo_tipo == None:
-            print("Não pôde realizar crossover, nós com tipos iguais não encontrados")
-        else:
+        if numero_aleatorio < p_c:
+            no_aleatorio_individuo_0 = par_individuos_copia[0].arvore.sorteia_no()
+            no_aleatorio_individuo_1 = par_individuos_copia[1].arvore.sorteia_no()
+
             # print("Vai fazer crossover. No a ser trocado indivíduo 1: ", no_aleatorio_individuo_0)
             # print("Vai fazer crossover. No a ser trocado indivíduo 2: ", no_aleatorio_encontrado_com_mesmo_tipo, "\n\n")
-            #Crossover com termnais nao ta funcionando pq nao tem filhos
-            subarvore_antiga_individuo_0 = no_aleatorio_individuo_0
-            subarvore_antiga_individuo_0.pai.del_filho(no_aleatorio_individuo_0)
-            subarvore_antiga_individuo_0.pai.add_filho(no_aleatorio_encontrado_com_mesmo_tipo)
-            subarvore_antiga_individuo_1 = no_aleatorio_encontrado_com_mesmo_tipo
-            subarvore_antiga_individuo_1.pai.del_filho(no_aleatorio_encontrado_com_mesmo_tipo)
-            subarvore_antiga_individuo_1.pai.add_filho(subarvore_antiga_individuo_0)
             
-            #no_aleatorio_individuo_0.filhos = no_aleatorio_encontrado_com_mesmo_tipo.filhos
-            #no_aleatorio_encontrado_com_mesmo_tipo.filhos = subarvore_antiga_individuo_0
-    else:
-        print("NÃO FEZ O CROSSOVER por probabilidade.")       
+            #Verificar essa lógica e ver se precisa e hard copy para o return
+            subarvore_antiga_individuo_0 = no_aleatorio_individuo_0
+            subarvore_antiga_individuo_1 = no_aleatorio_individuo_1
 
-    individuos_pos_crossover = par_individuos
+            if no_aleatorio_individuo_0.pai == None and no_aleatorio_individuo_1.pai == None:
+                print("Ambos são raiz. Continuar com os pais.")
+                pass
+            
+            else:
+                if no_aleatorio_individuo_0.pai == None:
+                    #Acho que isso atribui a raiz
+                    par_individuos_copia[0].arvore.raiz = subarvore_antiga_individuo_1
+                    subarvore_antiga_individuo_1.pai.substitui_filho(subarvore_antiga_individuo_1, subarvore_antiga_individuo_0)
 
-    # print("Pos crossover indivíduo 1:", individuos_pos_crossover[0])
-    # print("Pos crossover indivíduo 2:", individuos_pos_crossover[1])
-    
-    #Aplica ou não crossover
-    #Troca os pais pelos filhos
+                elif subarvore_antiga_individuo_1.pai == None:
+                    par_individuos_copia[1].arvore.raiz = subarvore_antiga_individuo_0
+                    subarvore_antiga_individuo_0.pai.substitui_filho(subarvore_antiga_individuo_0, subarvore_antiga_individuo_1)
 
-def realiza_mutacoes (individuos, p_m, num_vars):
+                else:
+                #Crossover com termnais nao ta funcionando pq nao tem filhos
+                    subarvore_antiga_individuo_0.pai.substitui_filho(subarvore_antiga_individuo_0, subarvore_antiga_individuo_1)
+                    subarvore_antiga_individuo_1.pai.substitui_filho(subarvore_antiga_individuo_1, subarvore_antiga_individuo_0)
+
+                subarvore_antiga_individuo_1.pai, subarvore_antiga_individuo_0.pai = subarvore_antiga_individuo_0.pai, subarvore_antiga_individuo_1.pai  
+
+        individuos_pos_crossover.extend(par_individuos_copia) #Confirmar que estou mexendo no par_individuos_copia
+
+    return individuos_pos_crossover
+
+        # print("Pos crossover indivíduo 1:", individuos_pos_crossover[0])
+        # print("Pos crossover indivíduo 2:", individuos_pos_crossover[1])
+        
+        #Aplica ou não crossover
+        #Troca os pais pelos filhos
+
+def realiza_mutacoes (individuos_pos_crossover, p_m:float, num_vars, num_tentativas): #FALTA ATUALIZAR ALTURA, PROFUNDIDADE E LISTA DE NOS
     #Seleciona um indivíduo aleatoriamente
     #Aplica ou não mutacao
     #Troca o "pai" pelo filho ou já diretao
-    num_individuos = 1
-    individuo_a_ser_mutado = random.choices(population=individuos, k=num_individuos)
-    numero_aleatorio = random.random()
 
-    print("\n\n\nIND ANTES MUTACAO: ", individuo_a_ser_mutado[0].arvore)
+    individuos_pos_mutacao = []
 
-    if numero_aleatorio < float(p_m):
-        no_aleatorio_individuo = individuo_a_ser_mutado[0].arvore.sorteia_no()
+    for _ in range(num_tentativas):
+        individuo_a_ser_mutado_copia = copy.deepcopy(random.choice(individuos_pos_crossover)) #Ver se compensa fazer 1 random choices com k = n e depois percorrer a lista
 
-        print("NO A SER MUTADO: ", no_aleatorio_individuo)
+        #print("\n\n\nIND ANTES MUTACAO: ", individuo_a_ser_mutado[0].arvore)
 
-        tamanho_max_subarvore = individuo_a_ser_mutado[0].altura_max_arvore - no_aleatorio_individuo.altura
+        numero_aleatorio = random.random()
 
-        subarvore = gera_arvore_metodo_grow(num_vars, tamanho_max_subarvore)
+        if numero_aleatorio < p_m:
+            no_aleatorio_individuo = individuo_a_ser_mutado_copia.arvore.sorteia_no()
 
-        no_aleatorio_individuo.pai.del_filho(no_aleatorio_individuo)
-        no_aleatorio_individuo.pai.add_filho(subarvore.raiz)
-    
-    print("IND DEPOIS MUTACAO: ", individuo_a_ser_mutado[0].arvore)
+            #print("NO A SER MUTADO: ", no_aleatorio_individuo)
+
+            tamanho_max_subarvore = individuo_a_ser_mutado_copia.profundidade_max_arvore - no_aleatorio_individuo.profundidade + 1
+
+            subarvore = gera_arvore_metodo_grow(num_vars, tamanho_max_subarvore)
+
+            if no_aleatorio_individuo.pai == None:
+                individuo_a_ser_mutado_copia.arvore.raiz = subarvore.raiz
+            else:
+                no_aleatorio_individuo.pai.substitui_filho(no_aleatorio_individuo, subarvore.raiz)
+                subarvore.raiz.pai = no_aleatorio_individuo
+        
+        #print("IND DEPOIS MUTACAO: ", individuo_a_ser_mutado[0].arvore)
+
+        individuos_pos_mutacao.append(individuo_a_ser_mutado_copia) #Confirmar que estou mexendo no par_individuos_copia
+
+    return individuos_pos_mutacao
 

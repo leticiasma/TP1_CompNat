@@ -8,8 +8,9 @@ class No():
     def __init__(self, valor):
         self.valor = valor
         self.pai = None
-        self.filhos:list[Individuo] = list() #Lista de nós
+        self.filhos:list[No] = list() #Lista de nós
         self.altura = 0
+        self.profundidade = 0
 
     def add_filho(self, novo_no_filho:'No'):
         self.filhos.append(novo_no_filho)
@@ -17,12 +18,23 @@ class No():
     def del_filho(self, filho:'No'):
         self.filhos.remove(filho)
 
+    def substitui_filho(self, filho_a_ser_substituido, novo_filho):
+        index_filho_a_ser_substituido = self.filhos.index(filho_a_ser_substituido)
+
+        self.filhos[index_filho_a_ser_substituido] = novo_filho
+
+    def __eq__(self, __other: object) -> bool:
+        if not isinstance(__other, No):
+            return False
+        
+        return self.valor == __other.valor and self.pai == __other.pai and self.filhos == __other.filhos and self.altura == __other.altura and self.profundidade == __other.profundidade
+
     def __repr__(self):
         str_filhos = ""
         for filho in self.filhos:
             str_filhos += filho.__repr__()
         
-        return f' No(Altura: {self.altura}, Valor:{self.valor}, Filhos: {str_filhos} )'
+        return f' No(Altura: {self.altura}, Profundidade: {self.profundidade}, Valor:{self.valor}, Filhos: {str_filhos} )'
     
     def avalia_valor(self, linha:dict): #PARA PASSAR SERIES_TODICT (???)
         raise NotImplementedError("Não implementado")
@@ -34,11 +46,15 @@ class NoTerminal(No):
 
     #CONFERIR
     def avalia_valor(self, linha:dict):
+        #print("A LINHA EH ", linha)
         if type(self.valor) == np.float64 or type(self.valor) == np.int64: #SEI LÁ
+            #print("eh um numero") #Isso printava muitas vezes ue
             return self.valor
-        elif type(self.valor) == list: #ACHO QUE TÁ RUIM
-            if self.valor[0][0] == "X":
-                return linha[self.valor[0]]
+        elif type(self.valor) == str: #ACHO QUE TÁ RUIM
+            if self.valor[0] == "X":
+                #return linha[self.valor[0]]
+                #Isso às vezes dá KeyError: 1 ou 0
+                return linha[self.valor] #do 1 até o final pq pode ser tipo, X23
         else:
             raise ValueError("Ue")
 
@@ -50,15 +66,15 @@ class NoNaoTerminal(No):
     #CONFERIR
     def avalia_valor(self, linha:dict):
 
-        if len(self.valor[0]) == 1:
+        if len(self.valor) == 1:
 
-            if self.valor[0] == '+':
+            if self.valor == '+':
                 return self.filhos[0].avalia_valor(linha) + self.filhos[1].avalia_valor(linha)
-            elif self.valor[0] == '-':
+            elif self.valor == '-':
                 return self.filhos[0].avalia_valor(linha) - self.filhos[1].avalia_valor(linha)
-            elif self.valor[0] == '*': 
+            elif self.valor == '*': 
                 return self.filhos[0].avalia_valor(linha) * self.filhos[1].avalia_valor(linha)
-            elif self.valor[0] == '/':
+            elif self.valor == '/':
                 termo_esq = self.filhos[0].avalia_valor(linha)
                 termo_dir = self.filhos[1].avalia_valor(linha)
 
@@ -70,15 +86,15 @@ class NoNaoTerminal(No):
             else:
                 raise ValueError("Ue")
             
-        elif len (self.valor[0]) == 3:
+        elif len (self.valor) == 3:
 
-            if self.valor[0] == 'sen':
+            if self.valor == 'sen':
                 return np.sin(self.filhos[0].avalia_valor(linha)) #QUE PORRA EH ESSA?
-            elif self.valor[0] == 'cos':
+            elif self.valor == 'cos':
                 return np.cos(self.filhos[0].avalia_valor(linha))
-            elif self.valor[0] == 'log':
+            elif self.valor == 'log':
                 return np.log(abs(self.filhos[0].avalia_valor(linha))) #VER SE DEIXA MESMO ESSE ABS
-            elif self.valor[0] == 'exp':
+            elif self.valor == 'exp':
                 return np.exp(self.filhos[0].avalia_valor(linha))
             else:
                 raise ValueError("Ue")
@@ -91,6 +107,7 @@ class Individuo():
     def __init__(self, altura_max_arvore):
         self.arvore = None
         self.altura_max_arvore = altura_max_arvore
+        self.profundidade_max_arvore = altura_max_arvore
     
     def __str__(self) -> str:
         return str(self.arvore)
@@ -98,14 +115,15 @@ class Individuo():
 #É a estrutura do indivíduo
 #OK!!!
 class Arvore():
-    def __init__(self, no_raiz:No, altura_atual:int): #PQ "ALTURA_ATUAL?"
+    def __init__(self, no_raiz:No, altura_atual:int, profundidade_atual:int): #PQ "ALTURA_ATUAL?"
         self.raiz = no_raiz
-        self.fitness = float('inf') #ACHO QUE NEM ESTOU USANDO
-        self.altura = altura_atual
-        self.nos = []
+        #self.fitness = float('inf') #ACHO QUE NEM ESTOU USANDO
+        self.altura_atual = altura_atual #acho q a altura da arvore em si preciso atualizar tbm pra eu saber quantos pode add a mais
+        self.profundidade_atual = profundidade_atual
+        self.nos = [] #VER SE A RAIZ ESTA SENDO COLOCADA
 
     def __repr__(self):
-        return f'Arvore(Altura árvore: {self.altura}; Estrutura: **Raiz: {self.raiz}**)'
+        return f'Arvore(Altura árvore: {self.altura_atual}; Profundidade árvore: {self.profundidade_atual}; Estrutura: **Raiz: {self.raiz}**)'
 
     # def tem_so_terminal(self, lista_nos:list[No]):
     #     for no in lista_nos:
@@ -114,7 +132,7 @@ class Arvore():
         
     #     return True
 
-    #Talvez não precise se eu já atualizar a altura de início em geração de subárvores em mutacao e em crossover
+    #Talvez não precise se eu já atualizar a altura de início em geração de subárvores em mutacao. Mas cross sim
     def atualiza_alturas(self):
         nos_nivel_atual = [self.raiz]
         altura_raiz = 0
@@ -122,6 +140,9 @@ class Arvore():
         while self.tem_so_terminal(nos_nivel_atual) == False:
             pass
         #AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+
+    def atualiza_profundidades(self):
+        pass
             
 
     #OK!!!
@@ -131,9 +152,11 @@ class Arvore():
     def sorteia_no(self):
         return random.choice(self.nos)
     
+    #Lembrar que depois de mutação e crossover a lista de nós precisa estar atualizada! Tanto deletando quanto adicionando
     def add_nos(self, nos:list):
         self.nos.extend(nos) #VER SE TA TENDO CONFUSAO COM A RAIZ OU NAO
 
+    #talvez apagar
     def procura_no(self, tipo):
         nos_com_tipo_buscado = []
 
@@ -147,62 +170,78 @@ class Arvore():
             return None
 
 #PIOR PARTE, CONFERIR BEM
-def gera_estrutura_arvore_grow(gramatica:Gramatica, expansao:list, t_max:int, nos:list, altura_atual):
-
-    if t_max == 1:
+def gera_estrutura_arvore_grow(gramatica:Gramatica, expansao:list, num_max_niveis_para_adicionar:int, nos:list, profundidade_atual:int):
+    #VER SE A LOGICA DE num_max_niveis_para_adicionar-1 tá certa ou se tá fazendo inivíduos menores do que poderia
+    if num_max_niveis_para_adicionar == 1: #Caso: Altura máxima da raiz chegando. Só pode adicionar mais um nível.
+        print("Altura máxima sendo atingida. Vai adicionar um terminal.")
         regra_terminal = gramatica.retorna_regra_terminal_aleatoria()
         no_criado = NoTerminal(gramatica.retorna_opcao_aleatoria_regra(regra_terminal))
-        no_criado.altura = altura_atual
+        no_criado.altura = 0 #VERIFICAR
+        no_criado.profundidade = profundidade_atual
+        print("O no criado foi: ", no_criado)
         nos.append(no_criado)
         
-        return no_criado, 1
+        return no_criado, 0, 1 #Altura e depois profundidade
     
-    if len(expansao) == 1:
+    if len(expansao) == 1: #Caso: sorteado um nó do tipo var ou const, mas isso aqui só valeria para expr... e os outros níveis?
+        print("A expansao foi const ou var")
+        #Cria um NoTerminal, mas acho que não precisaria ser
         no_criado = NoTerminal(gramatica.retorna_opcao_aleatoria_regra(expansao[0]))
-        no_criado.altura = altura_atual
+        no_criado.altura = 0 #VERIFICAR
+        no_criado.profundidade = profundidade_atual
         nos.append(no_criado)
 
-        return no_criado, 1
+        return no_criado, 0, 1
     
     elif len(expansao) == 2:
-        no_filho, altura_filho = gera_estrutura_arvore_grow(gramatica,
+        print("A expansao foi opun expr")
+        no_filho, altura_filho, profundidade_filho = gera_estrutura_arvore_grow(gramatica,
                                                     gramatica.retorna_opcao_aleatoria_regra(expansao[1]),
-                                                    t_max-1, nos, altura_atual+1)
+                                                    num_max_niveis_para_adicionar-1, nos, profundidade_atual+1)
         
         no_criado = NoNaoTerminal(gramatica.retorna_opcao_aleatoria_regra(expansao[0]))
-        no_criado.altura = altura_atual
+        no_criado.altura = altura_filho+1
+        no_criado.profundidade = profundidade_atual
         nos.append(no_criado)
         no_criado.add_filho(no_filho)
         no_filho.pai = no_criado
 
-        return no_criado, altura_filho+1
+        return no_criado, altura_filho+1, profundidade_filho+1
     
     elif len(expansao) == 3:
-        no_filho_esq, altura_filho_esq = gera_estrutura_arvore_grow(gramatica,
+        print("A expansão foi expr opbin expr")
+        no_filho_esq, altura_filho_esq, profundidade_filho_esq = gera_estrutura_arvore_grow(gramatica,
                                                     gramatica.retorna_opcao_aleatoria_regra(expansao[0]),
-                                                    t_max-1, nos, altura_atual+1)
+                                                    num_max_niveis_para_adicionar-1, nos, profundidade_atual+1)
         
-        no_filho_dir, altura_filho_dir = gera_estrutura_arvore_grow(gramatica,
+        no_filho_dir, altura_filho_dir, profundidade_filho_dir = gera_estrutura_arvore_grow(gramatica,
                                                     gramatica.retorna_opcao_aleatoria_regra(expansao[2]),
-                                                    t_max-1, nos, altura_atual+1)
+                                                    num_max_niveis_para_adicionar-1, nos, profundidade_atual+1)
         
         no_criado = NoNaoTerminal(gramatica.retorna_opcao_aleatoria_regra(expansao[1]))
+        no_criado.altura = max(altura_filho_esq, altura_filho_dir)+1
+        no_criado.profundidade = max(altura_filho_esq, altura_filho_dir)+1
         no_criado.add_filho(no_filho_esq)
         no_filho_esq.pai = no_criado
         no_criado.add_filho(no_filho_dir)
         no_filho_dir.pai = no_criado
         nos.append(no_criado)
     
-        return no_criado, max([altura_filho_dir, altura_filho_esq])+1
+        return no_criado, no_criado.altura, no_criado.profundidade
 
 #OK!!!       
-def gera_arvore_grow(gramatica:Gramatica, altura_max_arvore:int)->'Arvore':
+def gera_arvore_grow(gramatica:Gramatica, altura_max_arvore:int)->Arvore: #mudei aqui de 'Arvore' para Arvore
     nos = list()
-    no_raiz, altura = gera_estrutura_arvore_grow(gramatica,
+
+    #AQUI4
+    no_raiz, altura_gerada, profundidade_gerada = gera_estrutura_arvore_grow(gramatica,
                                                 gramatica.retorna_opcao_aleatoria_regra(gramatica.regra_inicial),
                                                 altura_max_arvore,
-                                                nos, 0
-                                                )
-    arvore = Arvore(no_raiz, altura)
+                                                nos, 0)
+    print("ALTURA GERADA ARVORE", altura_gerada)
+    #AQUI4
+
+    arvore = Arvore(no_raiz, altura_gerada, profundidade_gerada)
+    print("Altura raiz: ", arvore.raiz.altura)
     arvore.add_nos(nos)
     return arvore

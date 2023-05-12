@@ -15,17 +15,17 @@ class Gramatica():
                 ['<var>'],
                 ['<const>']],
             '<opbin>': [ #VER SE PRECISA MESMO DESSAS LISTAS COM 1 ELEMENTO SÓ
-                ['+'],
-                ['-'],
-                ['*'],
-                ['/']],
+                '+',#['+'],
+                '-',#['-'],
+                '*',#['*'],
+                '/'],#['/']],
             '<opun>': [
-                ['sen'],
-                ['cos'],
-                ['log'],
-                ['exp']],
+                'sen',#['sen'],
+                'cos',#['cos'],
+                'log',#['log'],
+                'exp'],#['exp']],
             '<var>': 
-                [['X'+str(i)] for i in np.arange(0, num_variaveis)], #VER SE PRECISA MESMO DESSAS LISTAS COM 1 ELEMENTO SÓ
+                ['X'+str(i) for i in np.arange(0, num_variaveis)], #VER SE PRECISA MESMO DESSAS LISTAS COM 1 ELEMENTO SÓ
             '<const>': self.remove_zero([i for i in np.arange(-1, 1, 0.1)])
         }
 
