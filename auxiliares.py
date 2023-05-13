@@ -22,7 +22,7 @@ def calcula_fitness_individuo(individuo:Individuo, df:pd.DataFrame):
 
 def calcula_fitness_individuo_linha(individuo:Individuo, linha:dict): #ver se a linha é mesmo um dict
 
-    print("a linha eh ", linha)
+    #print("a linha eh ", linha)
 
     resultado = individuo.arvore.avalia_individuo(linha)
     diferenca = resultado - linha["y"]

@@ -7,11 +7,11 @@ import copy
 import statistics
 
 #OK!!!
-def gera_arvore_metodo_grow(num_variaveis:int, altura_max_arvore:int) -> Arvore:
+def gera_arvore_metodo_grow(num_variaveis:int, altura_max_arvore:int, profundidade_de_onde_iniciar=0) -> Arvore:
     gramatica = Gramatica(num_variaveis)
 
     #AQUI3
-    arvore = gera_arvore_grow(gramatica, altura_max_arvore)
+    arvore = gera_arvore_grow(gramatica, altura_max_arvore, profundidade_de_onde_iniciar)
     #AQUI3
 
     return arvore
@@ -83,7 +83,7 @@ def selecao_lexicase(individuos:list, tamanho_populacao:int, df:pd.DataFrame):
         individuos_selecionados = individuos
 
         for linha in linhas_df_ordem_aleatoria:
-            print("A linha que esta vindo ", linha)
+            #print("A linha que esta vindo ", linha)
             fitness_individuos = []
 
             for individuo in individuos:
@@ -131,8 +131,16 @@ def realiza_crossovers (individuos_selecionados, p_c:float, num_tentativas): #FA
         numero_aleatorio = random.random()
 
         if numero_aleatorio < p_c:
-            no_aleatorio_individuo_0 = par_individuos_copia[0].arvore.sorteia_no()
-            no_aleatorio_individuo_1 = par_individuos_copia[1].arvore.sorteia_no()
+            alturas_da_para_trocar = False
+
+            while not alturas_da_para_trocar:
+                print("INDIVIDUOS PARA CROSSOVER: ", par_individuos_copia[0], "\n", par_individuos_copia[1])
+                no_aleatorio_individuo_0 = par_individuos_copia[0].arvore.sorteia_no()
+                no_aleatorio_individuo_1 = par_individuos_copia[1].arvore.sorteia_no()
+
+                if no_aleatorio_individuo_0.profundidade + no_aleatorio_individuo_1.altura <= par_individuos_copia[0].altura_max_arvore:
+                    if no_aleatorio_individuo_1.profundidade + no_aleatorio_individuo_0.altura <= par_individuos_copia[0].altura_max_arvore:
+                        alturas_da_para_trocar = True
 
             # print("Vai fazer crossover. No a ser trocado indivíduo 1: ", no_aleatorio_individuo_0)
             # print("Vai fazer crossover. No a ser trocado indivíduo 2: ", no_aleatorio_encontrado_com_mesmo_tipo, "\n\n")
@@ -142,25 +150,34 @@ def realiza_crossovers (individuos_selecionados, p_c:float, num_tentativas): #FA
             subarvore_antiga_individuo_1 = no_aleatorio_individuo_1
 
             if no_aleatorio_individuo_0.pai == None and no_aleatorio_individuo_1.pai == None:
-                print("Ambos são raiz. Continuar com os pais.")
+                #print("Ambos são raiz. Continuar com os pais.")
                 pass
             
             else:
                 if no_aleatorio_individuo_0.pai == None:
                     #Acho que isso atribui a raiz
                     par_individuos_copia[0].arvore.raiz = subarvore_antiga_individuo_1
+                    print("Substituindo ind1 por ind0")
                     subarvore_antiga_individuo_1.pai.substitui_filho(subarvore_antiga_individuo_1, subarvore_antiga_individuo_0)
 
                 elif subarvore_antiga_individuo_1.pai == None:
                     par_individuos_copia[1].arvore.raiz = subarvore_antiga_individuo_0
+                    print("Substituindo ind0 por ind1")
                     subarvore_antiga_individuo_0.pai.substitui_filho(subarvore_antiga_individuo_0, subarvore_antiga_individuo_1)
 
                 else:
                 #Crossover com termnais nao ta funcionando pq nao tem filhos
+                    print("Substituindo ind0 por ind1")
                     subarvore_antiga_individuo_0.pai.substitui_filho(subarvore_antiga_individuo_0, subarvore_antiga_individuo_1)
+                    print("Substituindo ind1 por ind0")
                     subarvore_antiga_individuo_1.pai.substitui_filho(subarvore_antiga_individuo_1, subarvore_antiga_individuo_0)
 
                 subarvore_antiga_individuo_1.pai, subarvore_antiga_individuo_0.pai = subarvore_antiga_individuo_0.pai, subarvore_antiga_individuo_1.pai  
+
+        #ATUALIZAR ALTURAS E PROFUNDIDADES DOS NÓS DOS INDS DO PAR
+        for individuo in par_individuos_copia:
+            _ = individuo.arvore.atualiza_alturas_e_retorna(individuo.arvore.raiz)
+            individuo.arvore.atualiza_profundidades(individuo.arvore.raiz, 0)
 
         individuos_pos_crossover.extend(par_individuos_copia) #Confirmar que estou mexendo no par_individuos_copia
 
@@ -193,7 +210,7 @@ def realiza_mutacoes (individuos_pos_crossover, p_m:float, num_vars, num_tentati
 
             tamanho_max_subarvore = individuo_a_ser_mutado_copia.profundidade_max_arvore - no_aleatorio_individuo.profundidade + 1
 
-            subarvore = gera_arvore_metodo_grow(num_vars, tamanho_max_subarvore)
+            subarvore = gera_arvore_metodo_grow(num_vars, tamanho_max_subarvore, no_aleatorio_individuo.profundidade)
 
             if no_aleatorio_individuo.pai == None:
                 individuo_a_ser_mutado_copia.arvore.raiz = subarvore.raiz
@@ -202,6 +219,9 @@ def realiza_mutacoes (individuos_pos_crossover, p_m:float, num_vars, num_tentati
                 subarvore.raiz.pai = no_aleatorio_individuo
         
         #print("IND DEPOIS MUTACAO: ", individuo_a_ser_mutado[0].arvore)
+        #atualizar profundidade e altura do individuo e seus nós
+        individuo_a_ser_mutado_copia.arvore.atualiza_alturas_e_retorna(individuo_a_ser_mutado_copia.arvore.raiz)
+        individuo_a_ser_mutado_copia.arvore.atualiza_profundidades(individuo_a_ser_mutado_copia.arvore.raiz, 0)
 
         individuos_pos_mutacao.append(individuo_a_ser_mutado_copia) #Confirmar que estou mexendo no par_individuos_copia
 

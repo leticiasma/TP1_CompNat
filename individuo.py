@@ -19,6 +19,10 @@ class No():
         self.filhos.remove(filho)
 
     def substitui_filho(self, filho_a_ser_substituido, novo_filho):
+
+        print("OS FILHOS SAO: ", self.filhos)
+        print("FILHO A TROCAR: ", filho_a_ser_substituido)
+
         index_filho_a_ser_substituido = self.filhos.index(filho_a_ser_substituido)
 
         self.filhos[index_filho_a_ser_substituido] = novo_filho
@@ -105,7 +109,7 @@ class NoNaoTerminal(No):
 #OK!!!
 class Individuo():
     def __init__(self, altura_max_arvore):
-        self.arvore = None
+        self.arvore:Arvore = None
         self.altura_max_arvore = altura_max_arvore
         self.profundidade_max_arvore = altura_max_arvore
     
@@ -133,17 +137,23 @@ class Arvore():
     #     return True
 
     #Talvez não precise se eu já atualizar a altura de início em geração de subárvores em mutacao. Mas cross sim
-    def atualiza_alturas(self):
-        nos_nivel_atual = [self.raiz]
-        altura_raiz = 0
-
-        while self.tem_so_terminal(nos_nivel_atual) == False:
-            pass
-        #AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
-
-    def atualiza_profundidades(self):
-        pass
+    def atualiza_alturas_e_retorna(self, no:No):
+        if type(no) is NoTerminal:
+            no.altura = 0
+            return 0
+        
+        alturas_filhos = []
+        for filho in no.filhos:
+            alturas_filhos.append(self.atualiza_alturas_e_retorna(filho))
             
+        no.altura = max(alturas_filhos)+1
+        return no.altura
+
+
+    def atualiza_profundidades(self, no:No, profundidade:int):
+        no.profundidade = profundidade
+        for filho in no.filhos:
+            self.atualiza_profundidades(filho, profundidade+1)            
 
     #OK!!!
     def avalia_individuo(self, linha:dict):
@@ -178,23 +188,23 @@ def gera_estrutura_arvore_grow(gramatica:Gramatica, expansao:list, num_max_nivei
         no_criado = NoTerminal(gramatica.retorna_opcao_aleatoria_regra(regra_terminal))
         no_criado.altura = 0 #VERIFICAR
         no_criado.profundidade = profundidade_atual
-        print("O no criado foi: ", no_criado)
+        #print("O no criado foi: ", no_criado)
         nos.append(no_criado)
         
-        return no_criado, 0, 1 #Altura e depois profundidade
+        return no_criado, 0, profundidade_atual #Altura e depois profundidade
     
     if len(expansao) == 1: #Caso: sorteado um nó do tipo var ou const, mas isso aqui só valeria para expr... e os outros níveis?
-        print("A expansao foi const ou var")
+        #print("A expansao foi const ou var")
         #Cria um NoTerminal, mas acho que não precisaria ser
         no_criado = NoTerminal(gramatica.retorna_opcao_aleatoria_regra(expansao[0]))
         no_criado.altura = 0 #VERIFICAR
         no_criado.profundidade = profundidade_atual
         nos.append(no_criado)
 
-        return no_criado, 0, 1
+        return no_criado, 0, profundidade_atual
     
     elif len(expansao) == 2:
-        print("A expansao foi opun expr")
+        #print("A expansao foi opun expr")
         no_filho, altura_filho, profundidade_filho = gera_estrutura_arvore_grow(gramatica,
                                                     gramatica.retorna_opcao_aleatoria_regra(expansao[1]),
                                                     num_max_niveis_para_adicionar-1, nos, profundidade_atual+1)
@@ -206,10 +216,10 @@ def gera_estrutura_arvore_grow(gramatica:Gramatica, expansao:list, num_max_nivei
         no_criado.add_filho(no_filho)
         no_filho.pai = no_criado
 
-        return no_criado, altura_filho+1, profundidade_filho+1
+        return no_criado, altura_filho+1, profundidade_filho
     
     elif len(expansao) == 3:
-        print("A expansão foi expr opbin expr")
+        #print("A expansão foi expr opbin expr")
         no_filho_esq, altura_filho_esq, profundidade_filho_esq = gera_estrutura_arvore_grow(gramatica,
                                                     gramatica.retorna_opcao_aleatoria_regra(expansao[0]),
                                                     num_max_niveis_para_adicionar-1, nos, profundidade_atual+1)
@@ -220,28 +230,29 @@ def gera_estrutura_arvore_grow(gramatica:Gramatica, expansao:list, num_max_nivei
         
         no_criado = NoNaoTerminal(gramatica.retorna_opcao_aleatoria_regra(expansao[1]))
         no_criado.altura = max(altura_filho_esq, altura_filho_dir)+1
-        no_criado.profundidade = max(altura_filho_esq, altura_filho_dir)+1
+        no_criado.profundidade = profundidade_atual
         no_criado.add_filho(no_filho_esq)
         no_filho_esq.pai = no_criado
         no_criado.add_filho(no_filho_dir)
         no_filho_dir.pai = no_criado
         nos.append(no_criado)
     
-        return no_criado, no_criado.altura, no_criado.profundidade
+        return no_criado, no_criado.altura, max(profundidade_filho_esq, profundidade_filho_dir)
 
 #OK!!!       
-def gera_arvore_grow(gramatica:Gramatica, altura_max_arvore:int)->Arvore: #mudei aqui de 'Arvore' para Arvore
+def gera_arvore_grow(gramatica:Gramatica, altura_max_arvore:int, profundidade_de_onde_iniciar)->Arvore: #mudei aqui de 'Arvore' para Arvore
     nos = list()
 
     #AQUI4
     no_raiz, altura_gerada, profundidade_gerada = gera_estrutura_arvore_grow(gramatica,
                                                 gramatica.retorna_opcao_aleatoria_regra(gramatica.regra_inicial),
                                                 altura_max_arvore,
-                                                nos, 0)
-    print("ALTURA GERADA ARVORE", altura_gerada)
+                                                nos, profundidade_de_onde_iniciar)
+    #print("ALTURA GERADA ARVORE", altura_gerada)
     #AQUI4
 
     arvore = Arvore(no_raiz, altura_gerada, profundidade_gerada)
-    print("Altura raiz: ", arvore.raiz.altura)
+    print("A ARVORE GERADA: ", arvore)
+    #print("Altura raiz: ", arvore.raiz.altura)
     arvore.add_nos(nos)
     return arvore
