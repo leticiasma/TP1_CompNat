@@ -13,7 +13,6 @@ import csv
 #random.seed(4438)
 #seed boa: 327
 
-#OK!!!
 def main():
     num_csv = 0
 
@@ -25,7 +24,7 @@ def main():
 
     num_geracoes = int(sys.argv[2]) #Num de iterações
     tamanho_populacao = int(sys.argv[3])
-    altura_max_individuo = int(sys.argv[4]) #Altura máxima, sendo altura_raiz = 1
+    altura_max_individuo = int(sys.argv[4]) 
     tipo_selecao = str(sys.argv[5])
     p_c = float(sys.argv[6]) #Probabilidade crossover entre dois indivíduos
     p_m = float(sys.argv[7]) #Probabilidade mutação de um indivíduo
@@ -37,18 +36,16 @@ def main():
             writer = csv.writer(f)
             writer.writerow(titulos_colunas)
 
-            #POR GERAÇÃO
+            #ESTATÍSTICAS QUE SERÃO COLETADAS POR GERAÇÃO
             fitness_melhor_individuo = math.inf
             fitness_pior_individuo = math.inf
             fitness_media_populacao = math.inf
             num_individuos_repetidos_populacao = math.inf
             num_individuos_gerados_crossover_melhores_fitness_media_pais = 0
             num_individuos_gerados_crossover_piores_fitness_media_pais = 0
-            #Gera a população inicial de indivíduos aleatoriamente seguindo regras da gramática
             
-            #AQUI1
+            #Gera a população inicial de indivíduos aleatoriamente seguindo regras da gramática
             individuos_iniciais = gera_populacao_inicial(tamanho_populacao, num_variaveis, altura_max_individuo)
-            #AQUI1
 
             populacao_atual = individuos_iniciais
 
@@ -68,7 +65,7 @@ def main():
                 elif tipo_selecao == 'l': #LEXICASE
                     individuos_selecionados = selecao_lexicase(populacao_atual, tamanho_populacao, df)
                 
-                #Tentar aplicar operações genéticas cada uma n vezes, nessa ordem
+                #Tentar aplicar operações genéticas cada uma um certo número de vezes, na ordem: crossovers, mutações
                 populacao_pos_crossover, num_individuos_gerados_crossover_melhores_fitness_media_pais, num_individuos_gerados_crossover_piores_fitness_media_pais = realiza_crossovers(df, individuos_selecionados, p_c, tamanho_populacao//2) #VER SE MUDA DENTRO DA PROPRIA POP_ATUAL OU TERIA QUE CRIAR UMA NOVA
                 
                 tam_populacao_crossover = len(populacao_pos_crossover)
@@ -84,15 +81,16 @@ def main():
                     indice_individuo_melhor_fitness_populacao_atual = fitness_individuos_populacao_atual.index(min(fitness_individuos_populacao_atual))
                     indivivuo_melhor_fitness_populacao_atual = populacao_atual[indice_individuo_melhor_fitness_populacao_atual]
                 
-                populacao_atual = copy.deepcopy(populacao_pos_crossovers_mutacoes) #Ver se isso precisaria mesmo ou não
+                populacao_atual = copy.deepcopy(populacao_pos_crossovers_mutacoes)
 
                 #Se elitismo, adiciona o melhor salvo na população atual
                 if elitismo == 1:
-                    populacao_atual.append(indivivuo_melhor_fitness_populacao_atual) #Aqui não precisa ser a cópia
+                    populacao_atual.append(indivivuo_melhor_fitness_populacao_atual)
 
-                for ind in populacao_atual:
-                    assert ind.arvore.altura_atual <= ind.profundidade_max_arvore
-                #-----ESTATISTICA-----
+                for individuo in populacao_atual:
+                    assert individuo.arvore.altura_atual <= individuo.profundidade_max_arvore
+
+                #-----ESTATISTICAS-----
                 fitnesses_da_geracao = calcula_fitness_individuos(populacao_atual, df)
                 fitness_melhor_individuo = min(fitnesses_da_geracao)
                 fitness_pior_individuo = max(fitnesses_da_geracao)
@@ -107,10 +105,8 @@ def main():
             fitnesses_individuos_finais = calcula_fitness_individuos(populacao_atual, df)
 
             #Retornar solução na posição da maior fitness
-            indice_melhor_fitness = fitnesses_individuos_finais.index(min(fitnesses_individuos_finais)) #?????
+            indice_melhor_fitness = fitnesses_individuos_finais.index(min(fitnesses_individuos_finais))
             melhor_individuo_solucao = populacao_atual[indice_melhor_fitness]
-
-            ##print("\nMELHOR SOLUCAO: ", melhor_individuo_solucao.arvore) 
         
         num_csv += 1
 
