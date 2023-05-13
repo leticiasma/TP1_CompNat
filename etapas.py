@@ -3,6 +3,7 @@ from gramatica import Gramatica
 from auxiliares import *
 import random
 from random import choices
+from typing import List
 import copy
 import statistics
 
@@ -51,7 +52,7 @@ def selecao_por_roleta(individuos:list, tamanho_populacao:int, df):
     for fitness_individuo in fitness_individuos:
         pesos_selecao_individuos.append(1 - (fitness_individuo/soma_fitness))
 
-    individuos_selecionados = random.choices(individuos, pesos_selecao_individuos, k=tamanho_populacao)
+    individuos_selecionados = choices(individuos, pesos_selecao_individuos, k=tamanho_populacao)
     individuos_selecionados_copias = [copy.deepcopy(individuo) for individuo in individuos_selecionados]
 
     return individuos_selecionados_copias
@@ -62,7 +63,7 @@ def selecao_por_torneio(individuos:list, tamanho_populacao:int, df):
     individuos_selecionados = []
 
     for _ in range (tamanho_populacao):
-        participantes_torneio = random.choices(population=individuos, k=tamanho_torneio)
+        participantes_torneio = choices(population=individuos, k=tamanho_torneio)
         fitness_participantes_torneio = calcula_fitness_individuos(participantes_torneio, df)
 
         indice_fitness_vencedor_torneio = fitness_participantes_torneio.index(min(fitness_participantes_torneio))
@@ -83,7 +84,7 @@ def selecao_lexicase(individuos:list, tamanho_populacao:int, df:pd.DataFrame):
         individuos_selecionados = individuos
 
         for linha in linhas_df_ordem_aleatoria:
-            #print("A linha que esta vindo ", linha)
+            ###print("A linha que esta vindo ", linha)
             fitness_individuos = []
 
             for individuo in individuos:
@@ -116,17 +117,22 @@ def selecao_lexicase(individuos:list, tamanho_populacao:int, df:pd.DataFrame):
     return individuos_finais_selecionados
 
 ######################################## OPERAÇÕES GENÉTICAS ########################################
-def realiza_crossovers (individuos_selecionados, p_c:float, num_tentativas): #FALTA ATUALIZAR ALTURA, PROFUNDIDADE E LISTA DE NOS
+def realiza_crossovers (df, individuos_selecionados, p_c:float, num_tentativas): #FALTA ATUALIZAR ALTURA, PROFUNDIDADE E LISTA DE NOS
 
+    num_individuos_gerados_crossover_melhores_fitness_media_pais = 0
+    num_individuos_gerados_crossover_piores_fitness_media_pais = 0
     individuos_pos_crossover = []
 
     for _ in range(num_tentativas):
+        #print("------CROSSOVER--------")
         #Seleciona dois indivíduos aleatoriamente
         num_individuos = 2
-        par_individuos_copia:list[Individuo,Individuo] = copy.deepcopy(random.choices(population=individuos_selecionados, k=num_individuos))
+        par_individuos = choices(population=individuos_selecionados, k=num_individuos)
+        par_individuos_copia:list[Individuo,Individuo] = copy.deepcopy(par_individuos)
 
-        # print("Indivíduo 1 selecionado:", par_individuos[0])
-        # print("Indivíduo 2 selecionado:", par_individuos[1], "\n\n")
+        #print("Indivíduo 1 selecionado:", par_individuos_copia[0])
+        #print("Indivíduo 2 selecionado:", par_individuos_copia[1], "\n\n")
+        #print(f"Lista de nós individuo arrombado: {par_individuos_copia[1].arvore.nos}")
 
         numero_aleatorio = random.random()
 
@@ -134,20 +140,17 @@ def realiza_crossovers (individuos_selecionados, p_c:float, num_tentativas): #FA
             alturas_da_para_trocar = False
 
             while not alturas_da_para_trocar:
-                print("INDIVIDUOS PARA CROSSOVER: ", par_individuos_copia[0], "\n", par_individuos_copia[1])
-                no_aleatorio_individuo_0 = par_individuos_copia[0].arvore.sorteia_no()
-                no_aleatorio_individuo_1 = par_individuos_copia[1].arvore.sorteia_no()
+                ##print("INDIVIDUOS PARA CROSSOVER: ", par_individuos_copia[0], "\n", par_individuos_copia[1])
+                no_aleatorio_individuo_0:No = par_individuos_copia[0].arvore.sorteia_no()
+                no_aleatorio_individuo_1:No = par_individuos_copia[1].arvore.sorteia_no()
 
                 if no_aleatorio_individuo_0.profundidade + no_aleatorio_individuo_1.altura <= par_individuos_copia[0].altura_max_arvore:
                     if no_aleatorio_individuo_1.profundidade + no_aleatorio_individuo_0.altura <= par_individuos_copia[0].altura_max_arvore:
                         alturas_da_para_trocar = True
 
-            # print("Vai fazer crossover. No a ser trocado indivíduo 1: ", no_aleatorio_individuo_0)
-            # print("Vai fazer crossover. No a ser trocado indivíduo 2: ", no_aleatorio_encontrado_com_mesmo_tipo, "\n\n")
-            
-            #Verificar essa lógica e ver se precisa e hard copy para o return
-            subarvore_antiga_individuo_0 = no_aleatorio_individuo_0
-            subarvore_antiga_individuo_1 = no_aleatorio_individuo_1
+            #print("Vai fazer crossover. No a ser trocado indivíduo 1: ", no_aleatorio_individuo_0)
+            #print("Vai fazer crossover. No a ser trocado indivíduo 2: ", no_aleatorio_individuo_1, "\n\n")
+            #print(f"pai no arrombado: {no_aleatorio_individuo_1.pai}")
 
             if no_aleatorio_individuo_0.pai == None and no_aleatorio_individuo_1.pai == None:
                 #print("Ambos são raiz. Continuar com os pais.")
@@ -155,41 +158,67 @@ def realiza_crossovers (individuos_selecionados, p_c:float, num_tentativas): #FA
             
             else:
                 if no_aleatorio_individuo_0.pai == None:
+                    #print("O nó a ser mutado do indivíduo 1 é raiz.")
                     #Acho que isso atribui a raiz
-                    par_individuos_copia[0].arvore.raiz = subarvore_antiga_individuo_1
-                    print("Substituindo ind1 por ind0")
-                    subarvore_antiga_individuo_1.pai.substitui_filho(subarvore_antiga_individuo_1, subarvore_antiga_individuo_0)
+                    par_individuos_copia[0].arvore.raiz = no_aleatorio_individuo_1
+                    #print("Substituindo no0 por no1")
+                    no_aleatorio_individuo_1.pai.substitui_filho(no_aleatorio_individuo_1, no_aleatorio_individuo_0)
 
-                elif subarvore_antiga_individuo_1.pai == None:
-                    par_individuos_copia[1].arvore.raiz = subarvore_antiga_individuo_0
-                    print("Substituindo ind0 por ind1")
-                    subarvore_antiga_individuo_0.pai.substitui_filho(subarvore_antiga_individuo_0, subarvore_antiga_individuo_1)
+                elif no_aleatorio_individuo_1.pai == None:
+                    #print("O nó a ser mutado do indivíduo 2 é raiz.")
+                    par_individuos_copia[1].arvore.raiz = no_aleatorio_individuo_0
+                    ##print("Substituindo ind0 por ind1")
+                    no_aleatorio_individuo_0.pai.substitui_filho(no_aleatorio_individuo_0, no_aleatorio_individuo_1)
 
                 else:
-                #Crossover com termnais nao ta funcionando pq nao tem filhos
-                    print("Substituindo ind0 por ind1")
-                    subarvore_antiga_individuo_0.pai.substitui_filho(subarvore_antiga_individuo_0, subarvore_antiga_individuo_1)
-                    print("Substituindo ind1 por ind0")
-                    subarvore_antiga_individuo_1.pai.substitui_filho(subarvore_antiga_individuo_1, subarvore_antiga_individuo_0)
+                    no_aleatorio_individuo_1:No = no_aleatorio_individuo_1
+                    #print("Lista de nós filhos do nó pai do aleatorio 1: ", no_aleatorio_individuo_0.pai.filhos)
+                    #print("Lista de nós filhos do nó pai do no aleatorio 2: ", no_aleatorio_individuo_1.pai.filhos, "\n\n")
+                    #print(f"Arrombado: {par_individuos_copia[1]}")
+                    #Crossover com termnais nao ta funcionando pq nao tem filhos
+                    ##print("Substituindo ind0 por ind1")
+                    no_aleatorio_individuo_0.pai.substitui_filho(no_aleatorio_individuo_0, no_aleatorio_individuo_1)
+                    ##print("Substituindo ind1 por ind0")
+                    no_aleatorio_individuo_1.pai.substitui_filho(no_aleatorio_individuo_1, no_aleatorio_individuo_0)
 
-                subarvore_antiga_individuo_1.pai, subarvore_antiga_individuo_0.pai = subarvore_antiga_individuo_0.pai, subarvore_antiga_individuo_1.pai  
+                no_aleatorio_individuo_1.pai, no_aleatorio_individuo_0.pai = no_aleatorio_individuo_0.pai, no_aleatorio_individuo_1.pai  
 
         #ATUALIZAR ALTURAS E PROFUNDIDADES DOS NÓS DOS INDS DO PAR
         for individuo in par_individuos_copia:
-            _ = individuo.arvore.atualiza_alturas_e_retorna(individuo.arvore.raiz)
+            
+            individuo.arvore.nos = []
+            lista_nos_a_serem_adicionados = []
+            _ = individuo.arvore.atualiza_lista_nos(individuo.arvore.raiz, lista_nos_a_serem_adicionados)
+            individuo.arvore.add_nos(lista_nos_a_serem_adicionados)
+
+            nova_altura_raiz = individuo.arvore.atualiza_alturas_e_retorna(individuo.arvore.raiz)
+            individuo.arvore.altura_atual = nova_altura_raiz
             individuo.arvore.atualiza_profundidades(individuo.arvore.raiz, 0)
+            individuo.arvore.profundidade_atual = individuo.arvore.raiz.profundidade
 
         individuos_pos_crossover.extend(par_individuos_copia) #Confirmar que estou mexendo no par_individuos_copia
 
-    return individuos_pos_crossover
+        fitnesses_pais = calcula_fitness_individuos(par_individuos, df)
+        fitnesses_filhos = calcula_fitness_individuos(par_individuos_copia, df)
 
-        # print("Pos crossover indivíduo 1:", individuos_pos_crossover[0])
-        # print("Pos crossover indivíduo 2:", individuos_pos_crossover[1])
+        fitness_media_pais = sum(fitnesses_pais)/len(fitnesses_pais)
+
+        for fitness_filho in fitnesses_filhos:
+            if fitness_filho > fitness_media_pais:
+                num_individuos_gerados_crossover_melhores_fitness_media_pais += 1
+            else:
+                num_individuos_gerados_crossover_piores_fitness_media_pais += 1
+
+
+    return individuos_pos_crossover, num_individuos_gerados_crossover_melhores_fitness_media_pais, num_individuos_gerados_crossover_piores_fitness_media_pais
+
+        # ##print("Pos crossover indivíduo 1:", individuos_pos_crossover[0])
+        # ##print("Pos crossover indivíduo 2:", individuos_pos_crossover[1])
         
         #Aplica ou não crossover
         #Troca os pais pelos filhos
 
-def realiza_mutacoes (individuos_pos_crossover, p_m:float, num_vars, num_tentativas): #FALTA ATUALIZAR ALTURA, PROFUNDIDADE E LISTA DE NOS
+def realiza_mutacoes (individuos_pos_crossover, p_m:float, num_vars, num_tentativas) -> List[Individuo]: #FALTA ATUALIZAR ALTURA, PROFUNDIDADE E LISTA DE NOS
     #Seleciona um indivíduo aleatoriamente
     #Aplica ou não mutacao
     #Troca o "pai" pelo filho ou já diretao
@@ -197,31 +226,48 @@ def realiza_mutacoes (individuos_pos_crossover, p_m:float, num_vars, num_tentati
     individuos_pos_mutacao = []
 
     for _ in range(num_tentativas):
-        individuo_a_ser_mutado_copia = copy.deepcopy(random.choice(individuos_pos_crossover)) #Ver se compensa fazer 1 random choices com k = n e depois percorrer a lista
+        individuo_a_ser_mutado_copia:Individuo = copy.deepcopy(random.choice(individuos_pos_crossover)) #Ver se compensa fazer 1 random choices com k = n e depois percorrer a lista
 
-        #print("\n\n\nIND ANTES MUTACAO: ", individuo_a_ser_mutado[0].arvore)
+        ###print("\n\n\nIND ANTES MUTACAO: ", individuo_a_ser_mutado[0].arvore)
 
         numero_aleatorio = random.random()
 
         if numero_aleatorio < p_m:
+
+            #print("-----MUTAÇÃO-----")
+
             no_aleatorio_individuo = individuo_a_ser_mutado_copia.arvore.sorteia_no()
 
-            #print("NO A SER MUTADO: ", no_aleatorio_individuo)
+            #print("\nIndividuo selecionado: ", individuo_a_ser_mutado_copia)
+            #print("\nNo a ser mutado: ", no_aleatorio_individuo)
+
+            ###print("NO A SER MUTADO: ", no_aleatorio_individuo)
 
             tamanho_max_subarvore = individuo_a_ser_mutado_copia.profundidade_max_arvore - no_aleatorio_individuo.profundidade + 1
 
+            #AQUI JA TEM OS NOS PARA ATUALIZAR A LISTA DE NOS
             subarvore = gera_arvore_metodo_grow(num_vars, tamanho_max_subarvore, no_aleatorio_individuo.profundidade)
+            #print("\nSubárvore a ser inserida no nó de mutação: ", subarvore)
 
             if no_aleatorio_individuo.pai == None:
+                #print("\nO nó a ser mutado é a raiz. Basta trocar a árvore inteira do indivíduo pela nova.")
                 individuo_a_ser_mutado_copia.arvore.raiz = subarvore.raiz
             else:
+                #print("\nLista de nós filhos do no pai do no a ser mutado: ", no_aleatorio_individuo.pai.filhos)
                 no_aleatorio_individuo.pai.substitui_filho(no_aleatorio_individuo, subarvore.raiz)
-                subarvore.raiz.pai = no_aleatorio_individuo
+                subarvore.raiz.pai = no_aleatorio_individuo.pai
         
-        #print("IND DEPOIS MUTACAO: ", individuo_a_ser_mutado[0].arvore)
-        #atualizar profundidade e altura do individuo e seus nós
-        individuo_a_ser_mutado_copia.arvore.atualiza_alturas_e_retorna(individuo_a_ser_mutado_copia.arvore.raiz)
-        individuo_a_ser_mutado_copia.arvore.atualiza_profundidades(individuo_a_ser_mutado_copia.arvore.raiz, 0)
+            ###print("IND DEPOIS MUTACAO: ", individuo_a_ser_mutado[0].arvore)
+            individuo_a_ser_mutado_copia.arvore.nos = []
+            lista_nos_a_serem_adicionados = []
+            _ = individuo_a_ser_mutado_copia.arvore.atualiza_lista_nos(individuo_a_ser_mutado_copia.arvore.raiz, lista_nos_a_serem_adicionados)
+            individuo_a_ser_mutado_copia.arvore.add_nos(lista_nos_a_serem_adicionados)
+
+            #atualizar profundidade e altura do individuo e seus nós
+            nova_altura_raiz = individuo_a_ser_mutado_copia.arvore.atualiza_alturas_e_retorna(individuo_a_ser_mutado_copia.arvore.raiz)
+            individuo_a_ser_mutado_copia.arvore.altura_atual = nova_altura_raiz
+            individuo_a_ser_mutado_copia.arvore.atualiza_profundidades(individuo_a_ser_mutado_copia.arvore.raiz, 0)
+            individuo_a_ser_mutado_copia.arvore.profundidade_atual = individuo_a_ser_mutado_copia.arvore.raiz.profundidade
 
         individuos_pos_mutacao.append(individuo_a_ser_mutado_copia) #Confirmar que estou mexendo no par_individuos_copia
 
