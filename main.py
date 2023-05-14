@@ -1,11 +1,11 @@
 from etapas import gera_populacao_inicial, calcula_fitness_individuos, calcula_fitness_individuo, selecao_por_roleta, selecao_por_torneio, selecao_lexicase, realiza_crossovers, realiza_mutacoes
-
 import random
 import pandas as pd 
 import sys
 from individuo import *
 import copy
 import csv
+from tqdm import tqdm
 
 #print("Seed usada:", seed)
 #random.seed(4438)
@@ -30,19 +30,26 @@ def main():
     p_m = float(sys.argv[8]) #Probabilidade mutação de um indivíduo
     elitismo = int(sys.argv[9]) #0 para não elitismo e 1 para elitismo
 
-    with open('estatisticas.csv', 'w', encoding='UTF8', newline='') as f:
-        titulos_colunas_f = ['fit_melhor_indiv_da_iteracao_base_treino', 'fit_melhor_indiv_da_iteracao_base_teste']
-        writer = csv.writer(f)
-        writer.writerow(titulos_colunas_f)
+    tamanho_populacao_original = copy.deepcopy(tamanho_populacao)
 
-        for _ in range(30):
+    if elitismo == 1:
+        tamanho_populacao -= 1
+
+    with open('melhor_fitness_treino_vs_teste.csv', 'w', encoding='UTF8', newline='') as f:
+        titulos_colunas_f = ['fit_melhor_indiv_da_iteracao_base_treino', 'fit_melhor_indiv_da_iteracao_base_teste']
+        writerf = csv.writer(f)
+        writerf.writerow(titulos_colunas_f)
+
+        for _ in tqdm(range(30)):
+            
             seed = random.randrange(100000)
             random.seed(seed)
 
-            with open('estatisticas'+str(num_csv)+'.csv', 'w', encoding='UTF8', newline='') as g:
+            nome_arquivo_estatisticas = 'estatisticas'+str(num_csv)+'_ger'+str(num_geracoes)+'_pop'+str(tamanho_populacao_original)+'_selecao_'+tipo_selecao+'_pc'+str(p_c)+'_pm'+str(p_m)+'.csv'
+            with open(nome_arquivo_estatisticas, 'w', encoding='UTF8', newline='') as g:
                 titulos_colunas_g = ['seed_aleatoria_usada', 'fit_melhor_indiv', 'fit_pior_indiv', 'fit_media_pop', 'indiv_repetidos_pop', 'indiv_cross_melhores_que_pais', 'indiv_cross_piores_que_pais']
-                writer = csv.writer(g)
-                writer.writerow(titulos_colunas_g)
+                writerg = csv.writer(g)
+                writerg.writerow(titulos_colunas_g)
 
                 #ESTATÍSTICAS QUE SERÃO COLETADAS POR GERAÇÃO
                 fitness_melhor_individuo = math.inf
@@ -56,9 +63,6 @@ def main():
                 individuos_iniciais = gera_populacao_inicial(tamanho_populacao, num_variaveis, altura_max_individuo)
 
                 populacao_atual = individuos_iniciais
-
-                if elitismo == 1:
-                    tamanho_populacao -= 1
 
                 #Por certo número de gerações ("critério de parada"), repetir o ciclo
                 for _ in range(num_geracoes):
@@ -86,7 +90,7 @@ def main():
                     if elitismo == 1:
                         #Salva o melhor indivíduo da população atual
                         fitness_individuos_populacao_atual = calcula_fitness_individuos(populacao_atual, df_treino)
-                        indice_individuo_melhor_fitness_populacao_atual = fitness_individuos_populacao_atual.index(min(fitness_individuos_populacao_atual))
+                        indice_individuo_melhor_fitness_populacao_atual = np.argmin(fitness_individuos_populacao_atual)
                         indivivuo_melhor_fitness_populacao_atual = populacao_atual[indice_individuo_melhor_fitness_populacao_atual]
                     
                     populacao_atual = copy.deepcopy(populacao_pos_crossovers_mutacoes)
@@ -95,34 +99,31 @@ def main():
                     if elitismo == 1:
                         populacao_atual.append(indivivuo_melhor_fitness_populacao_atual)
 
-                    for individuo in populacao_atual:
-                        print("TESTE ALTURA: ", individuo.arvore.altura_atual)
-                        assert individuo.arvore.altura_atual <= individuo.profundidade_max_arvore
-
                     #-----ESTATISTICAS-----
                     fitnesses_da_geracao = calcula_fitness_individuos(populacao_atual, df_treino)
-                    fitness_melhor_individuo = min(fitnesses_da_geracao)
-                    fitness_pior_individuo = max(fitnesses_da_geracao)
-                    fitness_media_populacao = sum(fitnesses_da_geracao)/len(fitnesses_da_geracao)
+                    fitness_melhor_individuo = np.min(fitnesses_da_geracao)
+                    fitness_pior_individuo = np.max(fitnesses_da_geracao)
+                    fitness_media_populacao = np.mean(fitnesses_da_geracao)
 
                     num_individuos_repetidos_populacao = len(fitnesses_da_geracao) - len(set(fitnesses_da_geracao))
 
                     linha_estatisticas = [seed, fitness_melhor_individuo, fitness_pior_individuo, fitness_media_populacao, num_individuos_repetidos_populacao, num_individuos_gerados_crossover_melhores_fitness_media_pais, num_individuos_gerados_crossover_piores_fitness_media_pais]
-                    writer.writerow(linha_estatisticas)       
+                    writerg.writerow(linha_estatisticas)       
                 
                 #Calcular a fitness para a última população gerada
                 fitnesses_individuos_finais = calcula_fitness_individuos(populacao_atual, df_treino)
 
                 #Retornar solução na posição da maior fitness
-                indice_melhor_fitness = fitnesses_individuos_finais.index(min(fitnesses_individuos_finais))
+                indice_melhor_fitness = np.argmin(fitnesses_individuos_finais)
                 melhor_individuo_solucao_base_treino = populacao_atual[indice_melhor_fitness]
 
-                fitness_melhor_individuo_solucao_base_treino = min(fitnesses_individuos_finais)
+                fitness_melhor_individuo_solucao_base_treino = np.min(fitnesses_individuos_finais)
 
+                melhor_individuo_solucao_base_treino.cache_fitness_dataset = None
                 resultado_avaliacao_base_teste = calcula_fitness_individuo(melhor_individuo_solucao_base_treino, df_teste)
 
                 linha_melhor_individuo = [fitness_melhor_individuo_solucao_base_treino, resultado_avaliacao_base_teste]
-                writer.writerow(linha_melhor_individuo) 
+                writerf.writerow(linha_melhor_individuo)
 
             num_csv += 1
 

@@ -5,22 +5,25 @@ from individuo import *
 
 def calcula_fitness_individuo(individuo:Individuo, df:pd.DataFrame):
 
-    fitness_individuo = 0
-    soma = 0
-    resultados = df.apply(lambda linha: individuo.arvore.avalia_individuo(linha.to_dict()), axis=1).to_numpy()
+    if individuo.cache_fitness_dataset == None:
+        fitness_individuo = 0
+        soma = 0
+        resultados = df.apply(lambda linha: individuo.arvore.avalia_individuo(linha.to_dict()), axis=1).to_numpy()
 
-    diferenca_quadrada = np.square(resultados - df["y"].to_numpy())
-    soma = np.sum(diferenca_quadrada)
-    fitness_individuo = math.sqrt(soma/len(df))
+        soma = np.sum(np.square(resultados - df["y"].to_numpy()))
+        fitness_individuo = np.sqrt(soma/df.shape[0])
+        individuo.arvore.fitness = fitness_individuo
 
-    individuo.arvore.fitness = fitness_individuo
+        individuo.cache_fitness_dataset = fitness_individuo
 
-    return fitness_individuo
+        return fitness_individuo
+    else:
+        return individuo.cache_fitness_dataset
 
 def calcula_fitness_individuo_linha(individuo:Individuo, linha:dict):
 
     resultado = individuo.arvore.avalia_individuo(linha)
-    diferenca = resultado - linha["y"]
+    diferenca = abs(resultado - linha["y"])
 
     return diferenca
 

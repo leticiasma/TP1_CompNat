@@ -19,23 +19,20 @@ def gera_populacao_inicial(tamanho_populacao:int, num_variaveis:int, altura_max_
 
     return individuos
 
-def calcula_fitness_individuos(individuos:list, df):
-    fitness_individuos = []
+def calcula_fitness_individuos(individuos:list, df) -> np.ndarray:
+    fitness_individuos = np.zeros(len(individuos))
 
-    for individuo in individuos:
-        fitness = calcula_fitness_individuo(individuo, df)
-        fitness_individuos.append(fitness)
+    for ind_idx, individuo in enumerate(individuos):
+        fitness_individuos[ind_idx] = calcula_fitness_individuo(individuo, df)
     
     return fitness_individuos
 
 ######################################## TIPOS DE SELEÇÃO ########################################
 def selecao_por_roleta(individuos:list, tamanho_populacao:int, df):
-    fitness_individuos = calcula_fitness_individuos (individuos, df)
-    soma_fitness = sum(fitness_individuos)
+    fitness_individuos = calcula_fitness_individuos(individuos, df)
+    soma_fitness = np.sum(fitness_individuos)
 
-    pesos_selecao_individuos = [] 
-    for fitness_individuo in fitness_individuos:
-        pesos_selecao_individuos.append(1 - (fitness_individuo/soma_fitness))
+    pesos_selecao_individuos:np.ndarray = (1 - (fitness_individuos/soma_fitness))
 
     individuos_selecionados = choices(individuos, pesos_selecao_individuos, k=tamanho_populacao)
     individuos_selecionados_copias = [copy.deepcopy(individuo) for individuo in individuos_selecionados]
@@ -51,7 +48,7 @@ def selecao_por_torneio(individuos:list, tamanho_populacao:int, df):
         participantes_torneio = choices(population=individuos, k=tamanho_torneio)
         fitness_participantes_torneio = calcula_fitness_individuos(participantes_torneio, df)
 
-        indice_fitness_vencedor_torneio = fitness_participantes_torneio.index(min(fitness_participantes_torneio))
+        indice_fitness_vencedor_torneio = np.argmin(fitness_participantes_torneio)
         vencedor_torneio = participantes_torneio[indice_fitness_vencedor_torneio]
 
         individuos_selecionados.append(copy.deepcopy(vencedor_torneio))
@@ -61,41 +58,50 @@ def selecao_por_torneio(individuos:list, tamanho_populacao:int, df):
 #Não tá passando por todas as linhas do DF.
 def selecao_lexicase(individuos:list, tamanho_populacao:int, df:pd.DataFrame):
 
+    df_para_dict = df.to_dict('records')
+
     individuos_finais_selecionados = []
 
     for _ in range(tamanho_populacao):
         #Cada loop do range é UMA seleção. Em cada loop vai excluindo até ficar apenas um selecionado.
-        linhas_df_ordem_aleatoria = random.sample(df.to_dict('records'), k=len(df))
-        individuos_selecionados = individuos
+        linhas_df_ordem_aleatoria = random.sample(df_para_dict, k=len(df))
+        individuos_selecionados_copia = copy.deepcopy(individuos)
 
         for linha in linhas_df_ordem_aleatoria:
             fitness_individuos = []
 
-            for individuo in individuos:
+            for individuo in individuos_selecionados_copia:
                 #É o erro
                 fitness_individuo = calcula_fitness_individuo_linha(individuo, linha)
                 fitness_individuos.append(fitness_individuo)
             
             melhor_fitness = min(fitness_individuos)
+            print("MELHOR FITNESS ", melhor_fitness)
             
             mediana_fitness_individuos = statistics.median(fitness_individuos)
             abs_diferenca_fitness_mediana = [abs(fitness - mediana_fitness_individuos) for fitness in fitness_individuos]
             MAD_linha = statistics.median(abs_diferenca_fitness_mediana)
+            print("MAD_LINHA ", MAD_linha)
 
             melhores_individuos = []
 
-            for indice_individuo in range(len(individuos_selecionados)):
+            for indice_individuo in range(len(individuos_selecionados_copia)):
                 fitness_individuo = fitness_individuos[indice_individuo]
+                print("FITNESS INDIVIDUO ", fitness_individuo)
 
-                if fitness_individuo < melhor_fitness + MAD_linha:
-                    melhores_individuos.append(individuos_selecionados[indice_individuo])
+                if fitness_individuo <= melhor_fitness + MAD_linha:
+                    print("É DOS MELHORES.")
+                    melhores_individuos.append(copy.deepcopy(individuos_selecionados_copia[indice_individuo]))
+                else:
+                    print("NAO ENTROU")
             
-            individuos_selecionados = melhores_individuos
+            individuos_selecionados_copia = melhores_individuos
 
-            if len(individuos_selecionados) == 1:
+            if len(individuos_selecionados_copia) == 1:
                 break
         
-        individuo_aleatorio = random.choice(individuos_selecionados) #Isso às vezes dá IndexError: list index out of range
+        print("LEN INDIV SELEC ", len(individuos_selecionados_copia))
+        individuo_aleatorio = random.choice(individuos_selecionados_copia) #Isso às vezes dá IndexError: list index out of range
         individuos_finais_selecionados.append(copy.deepcopy(individuo_aleatorio))
     
     return individuos_finais_selecionados
@@ -145,6 +151,9 @@ def realiza_crossovers (df, individuos_selecionados, p_c:float, num_tentativas):
 
                 no_aleatorio_individuo_1.pai, no_aleatorio_individuo_0.pai = no_aleatorio_individuo_0.pai, no_aleatorio_individuo_1.pai  
 
+                for individuo in par_individuos_copia:
+                    individuo.cache_fitness_dataset = None
+
         for individuo in par_individuos_copia:
             
             individuo.arvore.nos = []
@@ -162,14 +171,9 @@ def realiza_crossovers (df, individuos_selecionados, p_c:float, num_tentativas):
         fitnesses_pais = calcula_fitness_individuos(par_individuos, df)
         fitnesses_filhos = calcula_fitness_individuos(par_individuos_copia, df)
 
-        fitness_media_pais = sum(fitnesses_pais)/len(fitnesses_pais)
-
-        for fitness_filho in fitnesses_filhos:
-            if fitness_filho > fitness_media_pais:
-                num_individuos_gerados_crossover_melhores_fitness_media_pais += 1
-            else:
-                num_individuos_gerados_crossover_piores_fitness_media_pais += 1
-
+        fitness_media_pais = np.mean(fitnesses_pais)
+        num_individuos_gerados_crossover_melhores_fitness_media_pais += np.sum(fitnesses_filhos > fitness_media_pais)
+        num_individuos_gerados_crossover_piores_fitness_media_pais += np.sum(fitnesses_filhos <= fitness_media_pais)
 
     return individuos_pos_crossover, num_individuos_gerados_crossover_melhores_fitness_media_pais, num_individuos_gerados_crossover_piores_fitness_media_pais
 
@@ -198,6 +202,8 @@ def realiza_mutacoes (individuos_pos_crossover, p_m:float, num_vars, num_tentati
             lista_nos_a_serem_adicionados = []
             _ = individuo_a_ser_mutado_copia.arvore.atualiza_lista_nos(individuo_a_ser_mutado_copia.arvore.raiz, lista_nos_a_serem_adicionados)
             individuo_a_ser_mutado_copia.arvore.add_nos(lista_nos_a_serem_adicionados)
+
+            individuo_a_ser_mutado_copia.cache_fitness_dataset = None
 
             nova_altura_raiz = individuo_a_ser_mutado_copia.arvore.atualiza_alturas_e_retorna(individuo_a_ser_mutado_copia.arvore.raiz)
             individuo_a_ser_mutado_copia.arvore.altura_atual = nova_altura_raiz

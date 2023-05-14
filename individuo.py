@@ -42,9 +42,8 @@ class NoTerminal(No):
             return self.valor
         else:
             if self.valor[0] == "X":
-                #return linha[self.valor[0]]
                 #Isso às vezes dá KeyError: 1 ou 0
-                return linha[self.valor] #do 1 até o final pq pode ser tipo, X23
+                return linha[self.valor]
 
 class NoNaoTerminal(No):
     def __init__(self, valor):
@@ -65,7 +64,7 @@ class NoNaoTerminal(No):
                 if not math.isclose(termo_dir, 0, abs_tol=0.000000001):
                     return termo_esq / termo_dir
                 else:
-                    return 0 #VOU PENSAR EM ALGO MELHOR QUE ISSO
+                    return 0
             
         elif len (self.valor) == 3:
             if self.valor == 'sen':
@@ -79,13 +78,14 @@ class NoNaoTerminal(No):
                 if not math.isclose(termo, 0, abs_tol=0.000000001):
                     return np.log(termo)
                 else:
-                    return 0 #OU PENSAR EM ALGO MELHOR QUE ISSO
+                    return 0
 
 class Individuo():
     def __init__(self, altura_max_arvore):
         self.arvore:Arvore = None
         self.altura_max_arvore = altura_max_arvore
         self.profundidade_max_arvore = altura_max_arvore
+        self.cache_fitness_dataset = None
     
     def __str__(self) -> str:
         return str(self.arvore)
